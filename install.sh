@@ -33,7 +33,7 @@ sed \
 systemctl daemon-reload
 systemctl enable --now skill-agents-library.service
 
-sudo -u "$RUN_USER" env HOME="$USER_HOME" python3 "$TARGET/src/regenerate.sh" force || true
+sudo -u "$RUN_USER" env HOME="$USER_HOME" bash "$TARGET/src/regenerate.sh" force || true
 
 echo "add an nginx location block proxying /skill-library/ to"
 echo "  unix:/run/skill-agents-library/sock  (see docs/nginx-snippet.conf)"
