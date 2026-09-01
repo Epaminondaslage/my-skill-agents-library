@@ -101,7 +101,10 @@ persist an explicit choice in `localStorage`.
 
 ## Screenshot
 
-*(add `docs/screenshot-light.png` / `docs/screenshot-dark.png` and this section renders the same `<picture>` toggle My Harness Library uses)*
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/screenshot-dark.png">
+  <img alt="My Skill-Agents Library: 30 items, purpose-grouped sections colored by category, status/kind/purpose/sort filter pills, and a card grid" src="docs/screenshot-light.png">
+</picture>
 
 The header carries the title, an item count, and the theme toggle. Below it:
 status pills, kind pills, purpose pills (colored to match), sort pills, the
