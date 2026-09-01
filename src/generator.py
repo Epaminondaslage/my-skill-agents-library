@@ -515,8 +515,9 @@ function renderModal(item) {
   EDITABLE.forEach((field) => {
     const label = document.createElement("label");
     label.textContent = field;
-    const input = document.createElement("input");
-    input.type = "text";
+    const input = document.createElement(field === "function" ? "textarea" : "input");
+    if (field === "function") input.className = "function-field";
+    else input.type = "text";
     input.value = item[field] || "";
     label.appendChild(input);
     body.appendChild(label);
@@ -818,6 +819,20 @@ label input, label select {
   color: var(--fg);
   font-size: .85rem;
 }
+.function-field {
+  display: block;
+  width: 100%;
+  margin-top: .25rem;
+  padding: .4rem .55rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--fg);
+  font-size: .85rem;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 14rem; /* ~10 lines */
+}
 
 /* ---- Grade de cards ---- */
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; align-items: start; }
@@ -839,7 +854,7 @@ label input, label select {
   line-height: 1.4;
   color: var(--body-txt);
   display: -webkit-box;
-  -webkit-line-clamp: 4;
+  -webkit-line-clamp: 10;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
