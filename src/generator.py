@@ -177,9 +177,16 @@ function renderTopbar() {
   const bar = document.createElement("div");
   bar.className = "topbar";
 
+  const titleGroup = document.createElement("div");
+  titleGroup.className = "topbar-title-group";
   const h1 = document.createElement("h1");
   h1.textContent = "My Skill-Agents Library";
-  bar.appendChild(h1);
+  titleGroup.appendChild(h1);
+  const subtitle = document.createElement("span");
+  subtitle.className = "topbar-subtitle";
+  subtitle.textContent = "Catálogo de skills, agents, commands, MCPs e plugins para acelerar o ciclo de desenvolvimento de software";
+  titleGroup.appendChild(subtitle);
+  bar.appendChild(titleGroup);
 
   const right = document.createElement("div");
   right.className = "topbar-right";
@@ -766,21 +773,24 @@ body { margin: 0; font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-se
 
 /* ---- Header fixo de 56px ---- */
 .topbar {
-  height: 56px;
+  min-height: 56px;
   background: var(--surface);
   border-bottom: 3px solid var(--accent);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: .75rem;
-  padding: 0 1.25rem;
+  padding: .5rem 1.25rem;
   position: sticky;
   top: 0;
   z-index: 10;
 }
+.topbar-title-group { display: flex; flex-direction: column; gap: .1rem; min-width: 0; }
 .topbar h1 { font-size: 1.05rem; margin: 0; color: var(--accent); }
-.topbar-right { display: flex; align-items: center; gap: .75rem; }
+.topbar-subtitle { font-size: .74rem; color: var(--muted); }
+.topbar-right { display: flex; align-items: center; gap: .75rem; flex-shrink: 0; }
 .topbar-info { font-size: .78rem; color: var(--muted); }
+@media (max-width: 720px) { .topbar-subtitle { display: none; } }
 
 .theme-toggle {
   flex-shrink: 0;
