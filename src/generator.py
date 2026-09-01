@@ -219,11 +219,26 @@ function sortItems(list) {
   return sorted;
 }
 
+function renderStars(stars) {
+  const wrap = document.createElement("span");
+  wrap.className = "star";
+  const icon = document.createElement("span");
+  icon.className = "star-icon";
+  icon.textContent = "★";
+  const count = document.createElement("span");
+  count.className = "star-count";
+  count.textContent = String(stars || 0);
+  wrap.appendChild(icon);
+  wrap.appendChild(document.createTextNode(" "));
+  wrap.appendChild(count);
+  return wrap;
+}
+
 function countBy(list, key, value) {
   return list.filter((i) => (value === null ? true : i[key] === value)).length;
 }
 
-function renderPillRow(className, allLabel, options, labelFn, active, onPick, countFn) {
+function renderPillRow(className, allLabel, options, labelFn, active, onPick, countFn, colorClassFn) {
   const row = document.createElement("div");
   row.className = className;
   const withAll = allLabel === null ? options : [null].concat(options);
@@ -233,7 +248,8 @@ function renderPillRow(className, allLabel, options, labelFn, active, onPick, co
     const label = opt === null ? allLabel : labelFn(opt);
     const count = countFn ? countFn(opt) : null;
     btn.textContent = count === null ? label : label + " " + count;
-    btn.className = "btn btn-sm" + (opt === active ? " btn-primary" : "");
+    const colorClass = opt !== null && colorClassFn ? " " + colorClassFn(opt) : "";
+    btn.className = "btn btn-sm" + (opt === active ? " btn-primary" : "") + colorClass;
     btn.onclick = () => onPick(opt);
     row.appendChild(btn);
   });
@@ -252,7 +268,8 @@ function renderPurposeFilter() {
   return renderPillRow(
     "filters", "Todos", PURPOSES, (p) => PURPOSE_LABEL[p], filterPurpose,
     (p) => { filterPurpose = p; render(); },
-    (p) => countBy(items, "purpose", p)
+    (p) => countBy(items, "purpose", p),
+    (p) => "pill-purpose-" + p
   );
 }
 
@@ -426,9 +443,7 @@ function renderItem(item) {
 
   const meta = document.createElement("div");
   meta.className = "card-meta";
-  const star = document.createElement("span");
-  star.textContent = "★ " + (item.stars || 0);
-  meta.appendChild(star);
+  meta.appendChild(renderStars(item.stars));
   if (item.url) {
     const link = document.createElement("a");
     link.href = item.url;
@@ -550,7 +565,12 @@ function renderModal(item) {
   const repoInfo = document.createElement("div");
   repoInfo.className = "card-meta";
   repoInfo.id = "modal-repo-info";
-  repoInfo.textContent = "★ " + (item.stars || 0) + (item.url ? " · " + item.url : "");
+  const fillRepoInfo = () => {
+    while (repoInfo.firstChild) repoInfo.removeChild(repoInfo.firstChild);
+    repoInfo.appendChild(renderStars(item.stars));
+    if (item.url) repoInfo.appendChild(document.createTextNode(" · " + item.url));
+  };
+  fillRepoInfo();
   body.appendChild(repoInfo);
 
   const noteLabel = document.createElement("label");
@@ -615,7 +635,7 @@ function renderModal(item) {
     call("refresh_repo", { id: item.id }).then((updated) => {
       item.stars = updated.stars;
       item.url = updated.url;
-      repoInfo.textContent = "★ " + (item.stars || 0) + (item.url ? " · " + item.url : "");
+      fillRepoInfo();
     }, (ex) => handleError(ex, err));
   };
   actions.appendChild(refresh);
@@ -819,11 +839,14 @@ label input, label select {
   line-height: 1.4;
   color: var(--body-txt);
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 .card-meta { margin-top: .35rem; font-size: .72rem; color: var(--muted-2); word-break: break-word; }
+.star { display: inline-flex; align-items: center; gap: .15rem; }
+.star-icon { color: #f5b400; }
+.star-count { color: var(--strong); font-weight: 600; }
 .status-select {
   padding: .3rem .45rem;
   border: 1px solid var(--border);
@@ -922,6 +945,22 @@ label input, label select {
 .section-head.purpose-tooling      { border-left-color: var(--c-tooling-fg);      background: var(--c-tooling-bg);      color: var(--c-tooling-fg); }
 .section-head.purpose-frontend     { border-left-color: var(--c-frontend-fg);     background: var(--c-frontend-bg);     color: var(--c-frontend-fg); }
 .section-head.purpose-other        { border-left-color: var(--c-other-fg);        background: var(--c-other-bg);        color: var(--c-other-fg); }
+
+/* ---- Pills de filtro por purpose, mesma cor do badge/section-head ---- */
+.pill-purpose-general      { background: var(--c-general-bg);      color: var(--c-general-fg);      border-color: var(--c-general-fg); }
+.pill-purpose-devops       { background: var(--c-devops-bg);       color: var(--c-devops-fg);       border-color: var(--c-devops-fg); }
+.pill-purpose-spec-ops     { background: var(--c-spec-ops-bg);     color: var(--c-spec-ops-fg);     border-color: var(--c-spec-ops-fg); }
+.pill-purpose-quality      { background: var(--c-quality-bg);      color: var(--c-quality-fg);      border-color: var(--c-quality-fg); }
+.pill-purpose-security     { background: var(--c-security-bg);     color: var(--c-security-fg);     border-color: var(--c-security-fg); }
+.pill-purpose-integrations { background: var(--c-integrations-bg); color: var(--c-integrations-fg); border-color: var(--c-integrations-fg); }
+.pill-purpose-tooling      { background: var(--c-tooling-bg);      color: var(--c-tooling-fg);      border-color: var(--c-tooling-fg); }
+.pill-purpose-frontend     { background: var(--c-frontend-bg);     color: var(--c-frontend-fg);     border-color: var(--c-frontend-fg); }
+.pill-purpose-other        { background: var(--c-other-bg);        color: var(--c-other-fg);        border-color: var(--c-other-fg); }
+.pill-purpose-general.btn-primary, .pill-purpose-devops.btn-primary, .pill-purpose-spec-ops.btn-primary,
+.pill-purpose-quality.btn-primary, .pill-purpose-security.btn-primary, .pill-purpose-integrations.btn-primary,
+.pill-purpose-tooling.btn-primary, .pill-purpose-frontend.btn-primary, .pill-purpose-other.btn-primary {
+  box-shadow: inset 0 0 0 2px currentColor;
+}
 
 .card-meta a { color: var(--accent); text-decoration: none; }
 .card-meta a:hover { text-decoration: underline; }
