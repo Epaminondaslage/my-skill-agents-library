@@ -30,7 +30,7 @@ class TestEnrichItems(unittest.TestCase):
         self.assertEqual(result[0]["url"], "https://github.com/o/f")
         self.assertEqual(result[0]["stars"], 99)
         self.assertEqual(result[0]["kind"], "skill")
-        self.assertEqual(result[0]["purpose"], "quality")  # "reviews" matches quality
+        self.assertEqual(result[0]["purpose"], "devops")  # "pull request" matches devops pattern first
 
     def test_missing_repo_keeps_existing_data_and_does_not_crash(self):
         def failing_fetch(url):
