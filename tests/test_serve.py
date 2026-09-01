@@ -72,7 +72,7 @@ class ServeTestCase(unittest.TestCase):
 
     def seed_one(self):
         item = serve.Handler.lib.add_item(
-            name="foo", repo="o/f", stars="1K", function="x", dev_note="1/10"
+            name="foo", repo="o/f", function="x", dev_note="1/10"
         )
         return item["id"]
 
@@ -89,7 +89,6 @@ class TestReadsAndWrites(ServeTestCase):
                 "action": "add",
                 "name": "grill-me",
                 "repo": "o/g",
-                "stars": "1K",
                 "function": "x",
                 "dev_note": "10/10",
             }

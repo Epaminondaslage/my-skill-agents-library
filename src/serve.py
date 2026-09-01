@@ -42,12 +42,11 @@ class Handler(BaseHTTPRequestHandler):
                 result = self.lib.add_item(
                     name=req.get("name", ""),
                     repo=req.get("repo", ""),
-                    stars=req.get("stars", ""),
                     function=req.get("function", ""),
                     dev_note=req.get("dev_note", ""),
                 )
             elif action == "edit":
-                fields = {k: req.get(k) for k in ("name", "repo", "stars", "function", "dev_note")}
+                fields = {k: req.get(k) for k in ("name", "repo", "function", "dev_note", "kind", "purpose")}
                 result = self.lib.edit_item(req.get("id"), **fields)
             elif action == "delete":
                 self.lib.delete_item(req.get("id"))

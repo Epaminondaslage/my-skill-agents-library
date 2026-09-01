@@ -69,17 +69,16 @@ STATE = CLAUDE / ".skill-library"
 ITEMS_FILE = STATE / "items.json"
 REQUEST_FILE = STATE / "regen.request"
 
-EDITABLE_FIELDS = ("name", "repo", "stars", "function", "dev_note")
+EDITABLE_FIELDS = ("name", "repo", "function", "dev_note")
 
 # Field length caps. Short identifiers stay short; prose fields get room but
 # are still bounded so one item can never bloat items.json (nor the <script>
 # payload the generator embeds) without limit.
-MAX_SHORT_FIELD = 500  # name, repo, stars, dev_note
+MAX_SHORT_FIELD = 500  # name, repo, dev_note
 MAX_LONG_FIELD = 5000  # function, personal_note
 FIELD_LIMITS = {
     "name": MAX_SHORT_FIELD,
     "repo": MAX_SHORT_FIELD,
-    "stars": MAX_SHORT_FIELD,
     "dev_note": MAX_SHORT_FIELD,
     "function": MAX_LONG_FIELD,
     "personal_note": MAX_LONG_FIELD,
@@ -105,6 +104,10 @@ def _validate_field(key: str, value) -> str:
     if len(value) > limit:
         raise ApiError(400, f"{key} excede {limit} caracteres", code="invalid_field")
     return value
+
+
+def _repo_url(repo: str) -> str:
+    return f"https://github.com/{repo}" if repo else ""
 
 
 def _now() -> str:
@@ -147,14 +150,8 @@ class SkillLibrary:
 
     # -- writes ------------------------------------------------------------
 
-    def add_item(self, name: str, repo: str, stars: str, function: str, dev_note: str) -> dict:
-        values = {
-            "name": name,
-            "repo": repo,
-            "stars": stars,
-            "function": function,
-            "dev_note": dev_note,
-        }
+    def add_item(self, name: str, repo: str, function: str, dev_note: str) -> dict:
+        values = {"name": name, "repo": repo, "function": function, "dev_note": dev_note}
         clean = {
             key: _validate_field(key, "" if value is None else value).strip()
             for key, value in values.items()
@@ -166,9 +163,12 @@ class SkillLibrary:
             "id": uuid.uuid4().hex,
             "name": clean["name"],
             "repo": clean["repo"],
-            "stars": clean["stars"],
+            "url": _repo_url(clean["repo"]),
+            "stars": 0,
             "function": clean["function"],
             "dev_note": clean["dev_note"],
+            "kind": classify_kind(clean["name"], clean["function"]),
+            "purpose": classify_purpose(clean["name"], clean["function"]),
             "status": "candidata",
             "personal_note": "",
             "decided_at": None,
@@ -188,9 +188,22 @@ class SkillLibrary:
             for key, value in fields.items()
             if key in EDITABLE_FIELDS and value is not None
         }
+        kind = fields.get("kind")
+        if kind is not None and kind not in KINDS:
+            raise ApiError(400, f"kind inválido: {kind}", code="invalid_kind")
+        purpose = fields.get("purpose")
+        if purpose is not None and purpose not in PURPOSES:
+            raise ApiError(400, f"purpose inválido: {purpose}", code="invalid_purpose")
+
         items = self._read()
         item = self._find(items, item_id)
         item.update(clean)
+        if kind is not None:
+            item["kind"] = kind
+        if purpose is not None:
+            item["purpose"] = purpose
+        if "repo" in clean:
+            item["url"] = _repo_url(clean["repo"])
         item["updated_at"] = _now()
         self._write(items)
         return item
