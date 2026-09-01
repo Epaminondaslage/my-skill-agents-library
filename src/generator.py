@@ -413,6 +413,10 @@ function renderItem(item) {
   kindBadge.className = "badge badge-kind";
   kindBadge.textContent = KIND_LABEL[item.kind] || item.kind;
   head.appendChild(kindBadge);
+  const purposeBadge = document.createElement("span");
+  purposeBadge.className = "badge badge-" + item.purpose;
+  purposeBadge.textContent = PURPOSE_LABEL[item.purpose] || item.purpose;
+  head.appendChild(purposeBadge);
   card.appendChild(head);
 
   const desc = document.createElement("div");

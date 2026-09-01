@@ -45,6 +45,11 @@ boundary is the only access control).
 ## Working rules
 
 - Keep it stdlib-only and offline-first.
+- The one exception to "offline-first": `refresh_repo` (triggered by the
+  modal's "atualizar do GitHub" button) makes a single stdlib `urllib`
+  HTTPS GET to the GitHub API for that one item's repo. `src/enrich.py`
+  makes the same call in bulk, but only when run by hand — never from
+  serve.py, api.py, or cron.
 - State lives only under `~/.claude/.skill-library/`; the backend sandbox
   sees nothing else writable.
 - The backend must never spawn processes — regeneration goes through

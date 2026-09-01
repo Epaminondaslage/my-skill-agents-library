@@ -272,6 +272,28 @@ class TestRefreshRepo(unittest.TestCase):
             self.assertEqual(ctx.exception.status, 502)
             self.assertEqual(ctx.exception.payload["code"], "repo_fetch_failed")
 
+    def test_refresh_repo_rejects_invalid_repo_shape(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            lib = make_lib(tmp)
+            item = lib.add_item(name="foo", repo="../etc/passwd", function="x", dev_note="1/10")
+            with self.assertRaises(api.ApiError) as ctx:
+                lib.refresh_repo(item["id"])
+            self.assertEqual(ctx.exception.status, 400)
+            self.assertEqual(ctx.exception.payload["code"], "invalid_repo")
+
+    def test_refresh_repo_wraps_malformed_response_as_502(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            lib = make_lib(tmp)
+            item = lib.add_item(name="foo", repo="o/f", function="x", dev_note="1/10")
+
+            def malformed_fetch(url):
+                return {"html_url": "https://github.com/o/f", "stargazers_count": "not-a-number"}
+
+            with self.assertRaises(api.ApiError) as ctx:
+                lib.refresh_repo(item["id"], fetch_fn=malformed_fetch)
+            self.assertEqual(ctx.exception.status, 502)
+            self.assertEqual(ctx.exception.payload["code"], "repo_fetch_failed")
+
 
 if __name__ == "__main__":
     unittest.main()

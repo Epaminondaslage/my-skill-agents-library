@@ -102,6 +102,10 @@ class TestRenderAppJsFilters(unittest.TestCase):
         self.assertIn("refresh_repo", js)
         self.assertIn("atualizar do GitHub", js)
 
+    def test_card_shows_purpose_badge(self):
+        js = generator.render_app_js()
+        self.assertIn('"badge badge-" + item.purpose', js)
+
 
 class TestRenderStylesCssPurpose(unittest.TestCase):
     def test_defines_purpose_color_tokens(self):

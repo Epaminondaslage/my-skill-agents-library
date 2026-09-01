@@ -121,19 +121,24 @@ def _http_get_json(url: str) -> dict:
         return json.loads(resp.read().decode("utf-8"))
 
 
+_REPO_SHAPE = re.compile(r"^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$")
+
+
 def fetch_repo_info(repo: str, fetch_fn=None) -> dict:
     """GET the GitHub repo API for `repo` ("owner/name"). Returns
     {"url": str, "stars": int}. Any failure becomes ApiError(502,
     code="repo_fetch_failed") — refresh_repo never silently no-ops."""
+    if not _REPO_SHAPE.match(repo or ""):
+        raise ApiError(400, f"repo inválido: {repo}", code="invalid_repo")
     fetch_fn = fetch_fn or _http_get_json
     try:
         data = fetch_fn(f"https://api.github.com/repos/{repo}")
+        return {
+            "url": data.get("html_url") or _repo_url(repo),
+            "stars": int(data.get("stargazers_count", 0)),
+        }
     except (urllib.error.URLError, urllib.error.HTTPError, ValueError, OSError, TypeError) as exc:
         raise ApiError(502, f"falha ao consultar github: {exc}", code="repo_fetch_failed") from exc
-    return {
-        "url": data.get("html_url") or _repo_url(repo),
-        "stars": int(data.get("stargazers_count", 0)),
-    }
 
 
 def _now() -> str:
