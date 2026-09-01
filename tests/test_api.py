@@ -232,5 +232,46 @@ class TestEditItemKindPurpose(unittest.TestCase):
             self.assertEqual(updated["url"], "https://github.com/o/new-name")
 
 
+class TestRefreshRepo(unittest.TestCase):
+    def test_refresh_repo_updates_url_and_stars(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            lib = make_lib(tmp)
+            item = lib.add_item(name="foo", repo="o/f", function="x", dev_note="1/10")
+
+            def fake_fetch(url):
+                self.assertEqual(url, "https://api.github.com/repos/o/f")
+                return {"html_url": "https://github.com/o/f", "stargazers_count": 42}
+
+            updated = lib.refresh_repo(item["id"], fetch_fn=fake_fetch)
+            self.assertEqual(updated["url"], "https://github.com/o/f")
+            self.assertEqual(updated["stars"], 42)
+
+    def test_refresh_repo_does_not_reclassify(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            lib = make_lib(tmp)
+            item = lib.add_item(name="foo", repo="o/f", function="x", dev_note="1/10")
+            lib.edit_item(item["id"], kind="agent", purpose="devops")
+
+            def fake_fetch(url):
+                return {"html_url": "https://github.com/o/f", "stargazers_count": 1}
+
+            updated = lib.refresh_repo(item["id"], fetch_fn=fake_fetch)
+            self.assertEqual(updated["kind"], "agent")
+            self.assertEqual(updated["purpose"], "devops")
+
+    def test_refresh_repo_wraps_fetch_failure_as_502(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            lib = make_lib(tmp)
+            item = lib.add_item(name="foo", repo="o/f", function="x", dev_note="1/10")
+
+            def failing_fetch(url):
+                raise OSError("network unreachable")
+
+            with self.assertRaises(api.ApiError) as ctx:
+                lib.refresh_repo(item["id"], fetch_fn=failing_fetch)
+            self.assertEqual(ctx.exception.status, 502)
+            self.assertEqual(ctx.exception.payload["code"], "repo_fetch_failed")
+
+
 if __name__ == "__main__":
     unittest.main()

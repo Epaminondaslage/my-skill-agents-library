@@ -12,6 +12,8 @@ from __future__ import annotations
 import json
 import os
 import re
+import urllib.error
+import urllib.request
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -108,6 +110,30 @@ def _validate_field(key: str, value) -> str:
 
 def _repo_url(repo: str) -> str:
     return f"https://github.com/{repo}" if repo else ""
+
+
+def _http_get_json(url: str) -> dict:
+    req = urllib.request.Request(
+        url,
+        headers={"User-Agent": "my-skill-agents-library", "Accept": "application/vnd.github+json"},
+    )
+    with urllib.request.urlopen(req, timeout=10) as resp:
+        return json.loads(resp.read().decode("utf-8"))
+
+
+def fetch_repo_info(repo: str, fetch_fn=None) -> dict:
+    """GET the GitHub repo API for `repo` ("owner/name"). Returns
+    {"url": str, "stars": int}. Any failure becomes ApiError(502,
+    code="repo_fetch_failed") — refresh_repo never silently no-ops."""
+    fetch_fn = fetch_fn or _http_get_json
+    try:
+        data = fetch_fn(f"https://api.github.com/repos/{repo}")
+    except (urllib.error.URLError, urllib.error.HTTPError, ValueError, OSError, TypeError) as exc:
+        raise ApiError(502, f"falha ao consultar github: {exc}", code="repo_fetch_failed") from exc
+    return {
+        "url": data.get("html_url") or _repo_url(repo),
+        "stars": int(data.get("stargazers_count", 0)),
+    }
 
 
 def _now() -> str:
@@ -230,6 +256,16 @@ class SkillLibrary:
         items = self._read()
         item = self._find(items, item_id)
         item["personal_note"] = note
+        item["updated_at"] = _now()
+        self._write(items)
+        return item
+
+    def refresh_repo(self, item_id: str, fetch_fn=None) -> dict:
+        items = self._read()
+        item = self._find(items, item_id)
+        info = fetch_repo_info(item["repo"], fetch_fn=fetch_fn)
+        item["url"] = info["url"]
+        item["stars"] = info["stars"]
         item["updated_at"] = _now()
         self._write(items)
         return item
