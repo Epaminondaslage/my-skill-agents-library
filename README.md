@@ -1,5 +1,10 @@
 # My Skill-Agents Library
 
+![license](https://img.shields.io/badge/license-MIT-green)
+![python](https://img.shields.io/badge/python-3.9%2B-blue)
+![deps](https://img.shields.io/badge/dependencies-stdlib%20only-brightgreen)
+![tests](https://img.shields.io/badge/tests-66%20passing-brightgreen)
+
 **A self-hosted CRUD catalog for the skill and plugin suggestions you run across — a decision queue, not an inventory.**
 
 You find a skill worth trying in a tweet, a repo, a conversation. You don't
@@ -34,6 +39,7 @@ system, unrelated data.
 - [Project layout](#project-layout)
 - [Codebase map](#codebase-map)
 - [Notes for contributors](#notes-for-contributors)
+- [Acknowledgments](#acknowledgments)
 - [License](#license)
 
 ---
@@ -418,8 +424,14 @@ node --check /tmp/app.js
 
 ---
 
+## Acknowledgments
+
+- [My Harness Library](https://github.com/Epaminondaslage/my-Harness-Library) — the sibling project this one borrows its design system, security posture, and deploy-mode shape from. Its `classify()`/`CATEGORY_RULES` heuristic is the direct ancestor of this project's `classify_kind`/`classify_purpose`.
+- [Cartographer](https://github.com/kingbootoshi/cartographer) — generated [`docs/CODEBASE_MAP.md`](docs/CODEBASE_MAP.md).
+- Built with [Claude Code](https://claude.com/claude-code).
+
 ## License
 
-MIT — see [LICENSE](LICENSE) if present, otherwise treat as unlicensed until one is added.
+MIT — see [LICENSE](LICENSE).
 
-Built for [Claude Code](https://claude.com/claude-code). Not affiliated with Anthropic.
+Not affiliated with Anthropic.
