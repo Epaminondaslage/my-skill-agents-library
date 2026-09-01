@@ -60,10 +60,26 @@ def render_app_js() -> str:
 const API = "/skill-library/api";
 const STATUSES = ["candidata", "aprovada", "rejeitada"];
 const STATUS_LABEL = { candidata: "candidata", aprovada: "aprovada", rejeitada: "rejeitada" };
-const EDITABLE = ["name", "repo", "stars", "function", "dev_note"];
+const KINDS = ["skill", "agent", "command", "plugin", "mcp"];
+const KIND_LABEL = { skill: "Skills", agent: "Agents", command: "Commands", plugin: "Plugins", mcp: "MCPs" };
+const PURPOSES = [
+  "general", "devops", "spec-ops", "quality", "security",
+  "integrations", "tooling", "frontend", "other",
+];
+const PURPOSE_LABEL = {
+  general: "General", devops: "DevOps", "spec-ops": "Spec-Driven Ops", quality: "Quality",
+  security: "Security", integrations: "Integrations", tooling: "Tooling",
+  frontend: "Frontend", other: "Other",
+};
+const SORTS = ["default", "stars", "updated", "name"];
+const SORT_LABEL = { default: "Padrão", stars: "Mais estrelas", updated: "Atualização recente", name: "Nome" };
+const EDITABLE = ["name", "repo", "function", "dev_note"];
 
 let items = [];
 let filterStatus = null;
+let filterKind = null;
+let filterPurpose = null;
+let sortBy = "default";
 let openModalId = null; // id of the item whose modal is open, or null
 
 // ---- tema: claro/escuro/auto, persistido em localStorage -----------------
@@ -195,6 +211,59 @@ function renderFilters() {
   return filters;
 }
 
+function sortItems(list) {
+  const sorted = list.slice();
+  if (sortBy === "stars") sorted.sort((a, b) => (b.stars || 0) - (a.stars || 0));
+  else if (sortBy === "updated") sorted.sort((a, b) => (b.updated_at || "").localeCompare(a.updated_at || ""));
+  else if (sortBy === "name") sorted.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+  return sorted;
+}
+
+function countBy(list, key, value) {
+  return list.filter((i) => (value === null ? true : i[key] === value)).length;
+}
+
+function renderPillRow(className, allLabel, options, labelFn, active, onPick, countFn) {
+  const row = document.createElement("div");
+  row.className = className;
+  const withAll = allLabel === null ? options : [null].concat(options);
+  withAll.forEach((opt) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    const label = opt === null ? allLabel : labelFn(opt);
+    const count = countFn ? countFn(opt) : null;
+    btn.textContent = count === null ? label : label + " " + count;
+    btn.className = "btn btn-sm" + (opt === active ? " btn-primary" : "");
+    btn.onclick = () => onPick(opt);
+    row.appendChild(btn);
+  });
+  return row;
+}
+
+function renderKindFilter() {
+  return renderPillRow(
+    "filters", "Todos", KINDS, (k) => KIND_LABEL[k], filterKind,
+    (k) => { filterKind = k; render(); },
+    (k) => countBy(items, "kind", k)
+  );
+}
+
+function renderPurposeFilter() {
+  return renderPillRow(
+    "filters", "Todos", PURPOSES, (p) => PURPOSE_LABEL[p], filterPurpose,
+    (p) => { filterPurpose = p; render(); },
+    (p) => countBy(items, "purpose", p)
+  );
+}
+
+function renderSortFilter() {
+  return renderPillRow(
+    "filters", null, SORTS, (s) => SORT_LABEL[s], sortBy,
+    (s) => { sortBy = s || "default"; render(); },
+    null
+  );
+}
+
 function renderAddForm() {
   const form = document.createElement("form");
   form.className = "add-form card";
@@ -251,25 +320,61 @@ function render() {
   container.className = "container";
 
   container.appendChild(renderFilters());
+  container.appendChild(renderKindFilter());
+  container.appendChild(renderPurposeFilter());
+  container.appendChild(renderSortFilter());
   container.appendChild(renderAddForm());
 
-  const list = document.createElement("div");
-  list.className = "grid";
-  const visible = items.filter((i) => !filterStatus || i.status === filterStatus);
-  if (visible.length === 0) {
-    const empty = document.createElement("div");
-    empty.className = "empty";
-    empty.textContent = "nenhum item aqui";
-    list.appendChild(empty);
-  } else {
-    visible.forEach((item) => list.appendChild(renderItem(item)));
-  }
-  container.appendChild(list);
+  const filtered = items.filter(
+    (i) =>
+      (!filterStatus || i.status === filterStatus) &&
+      (!filterKind || i.kind === filterKind) &&
+      (!filterPurpose || i.purpose === filterPurpose)
+  );
+
+  container.appendChild(renderSections(filtered));
 
   app.appendChild(container);
 
   const openItem = items.find((i) => i.id === openModalId);
   if (openItem) app.appendChild(renderModal(openItem));
+}
+
+// One section per purpose (fixed order, empty ones omitted). The purpose
+// filter above narrows to a single section instead of hiding the rest.
+function renderSections(filtered) {
+  const wrap = document.createElement("div");
+  const purposesToShow = filterPurpose ? [filterPurpose] : PURPOSES;
+
+  let any = false;
+  purposesToShow.forEach((purpose) => {
+    const group = sortItems(filtered.filter((i) => i.purpose === purpose));
+    if (group.length === 0) return;
+    any = true;
+
+    const section = document.createElement("div");
+    section.className = "purpose-section";
+
+    const head = document.createElement("div");
+    head.className = "section-head purpose-" + purpose;
+    head.textContent = PURPOSE_LABEL[purpose] + " (" + group.length + ")";
+    section.appendChild(head);
+
+    const grid = document.createElement("div");
+    grid.className = "grid";
+    group.forEach((item) => grid.appendChild(renderItem(item)));
+    section.appendChild(grid);
+
+    wrap.appendChild(section);
+  });
+
+  if (!any) {
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.textContent = "nenhum item aqui";
+    wrap.appendChild(empty);
+  }
+  return wrap;
 }
 
 function renderItem(item) {
@@ -304,6 +409,10 @@ function renderItem(item) {
   badge.className = "badge badge-" + item.status;
   badge.textContent = STATUS_LABEL[item.status] || item.status;
   head.appendChild(badge);
+  const kindBadge = document.createElement("span");
+  kindBadge.className = "badge badge-kind";
+  kindBadge.textContent = KIND_LABEL[item.kind] || item.kind;
+  head.appendChild(kindBadge);
   card.appendChild(head);
 
   const desc = document.createElement("div");
@@ -313,7 +422,21 @@ function renderItem(item) {
 
   const meta = document.createElement("div");
   meta.className = "card-meta";
-  meta.textContent = [item.repo, item.stars].filter(Boolean).join(" · ");
+  const star = document.createElement("span");
+  star.textContent = "★ " + (item.stars || 0);
+  meta.appendChild(star);
+  if (item.url) {
+    const link = document.createElement("a");
+    link.href = item.url;
+    link.target = "_blank";
+    link.rel = "noopener";
+    link.textContent = item.repo || item.url;
+    link.onclick = (e) => e.stopPropagation();
+    meta.appendChild(document.createTextNode(" · "));
+    meta.appendChild(link);
+  } else if (item.repo) {
+    meta.appendChild(document.createTextNode(" · " + item.repo));
+  }
   card.appendChild(meta);
 
   const actions = document.createElement("div");
@@ -394,6 +517,38 @@ function renderModal(item) {
   statusLabel.appendChild(select);
   body.appendChild(statusLabel);
 
+  const kindLabel = document.createElement("label");
+  kindLabel.textContent = "kind";
+  const kindSelect = document.createElement("select");
+  KINDS.forEach((k) => {
+    const opt = document.createElement("option");
+    opt.value = k;
+    opt.textContent = KIND_LABEL[k];
+    opt.selected = k === item.kind;
+    kindSelect.appendChild(opt);
+  });
+  kindLabel.appendChild(kindSelect);
+  body.appendChild(kindLabel);
+
+  const purposeLabel = document.createElement("label");
+  purposeLabel.textContent = "purpose";
+  const purposeSelect = document.createElement("select");
+  PURPOSES.forEach((p) => {
+    const opt = document.createElement("option");
+    opt.value = p;
+    opt.textContent = PURPOSE_LABEL[p];
+    opt.selected = p === item.purpose;
+    purposeSelect.appendChild(opt);
+  });
+  purposeLabel.appendChild(purposeSelect);
+  body.appendChild(purposeLabel);
+
+  const repoInfo = document.createElement("div");
+  repoInfo.className = "card-meta";
+  repoInfo.id = "modal-repo-info";
+  repoInfo.textContent = "★ " + (item.stars || 0) + (item.url ? " · " + item.url : "");
+  body.appendChild(repoInfo);
+
   const noteLabel = document.createElement("label");
   noteLabel.textContent = "nota pessoal";
   const note = document.createElement("textarea");
@@ -413,7 +568,7 @@ function renderModal(item) {
   save.textContent = "salvar";
   save.onclick = () => {
     showError(err, "");
-    const body2 = { id: item.id };
+    const body2 = { id: item.id, kind: kindSelect.value, purpose: purposeSelect.value };
     EDITABLE.forEach((f) => {
       body2[f] = fields[f].value;
     });
@@ -446,6 +601,20 @@ function renderModal(item) {
     }, (ex) => handleError(ex, err));
   };
   actions.appendChild(del);
+
+  const refresh = document.createElement("button");
+  refresh.type = "button";
+  refresh.className = "btn btn-sm";
+  refresh.textContent = "atualizar do GitHub";
+  refresh.onclick = () => {
+    showError(err, "");
+    call("refresh_repo", { id: item.id }).then((updated) => {
+      item.stars = updated.stars;
+      item.url = updated.url;
+      repoInfo.textContent = "★ " + (item.stars || 0) + (item.url ? " · " + item.url : "");
+    }, (ex) => handleError(ex, err));
+  };
+  actions.appendChild(refresh);
 
   return overlay;
 }
@@ -499,6 +668,16 @@ def render_styles_css() -> str:
   --c-candidata-bg: #fef3c7; --c-candidata-fg: #a16207;
   --c-aprovada-bg:  #dcfce7; --c-aprovada-fg:  #15803d;
   --c-rejeitada-bg: #fee2e2; --c-rejeitada-fg: #b91c1c;
+  /* badges por purpose */
+  --c-general-bg:      #e5e7eb; --c-general-fg:      #4b5563;
+  --c-devops-bg:       #dcfce7; --c-devops-fg:        #15803d;
+  --c-spec-ops-bg:     #e0e7ff; --c-spec-ops-fg:      #4338ca;
+  --c-quality-bg:      #cffafe; --c-quality-fg:       #0e7490;
+  --c-security-bg:     #fee2e2; --c-security-fg:      #b91c1c;
+  --c-integrations-bg: #fef3c7; --c-integrations-fg:  #a16207;
+  --c-tooling-bg:      #f3e8ff; --c-tooling-fg:       #7e22ce;
+  --c-frontend-bg:     #fce7f3; --c-frontend-fg:      #be185d;
+  --c-other-bg:        #f3f4f6; --c-other-fg:         #6b7280;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -518,6 +697,15 @@ def render_styles_css() -> str:
     --c-candidata-bg: #4a3410; --c-candidata-fg: #fcd34d;
     --c-aprovada-bg:  #14532d; --c-aprovada-fg:  #86efac;
     --c-rejeitada-bg: #5c1f1f; --c-rejeitada-fg: #fca5a5;
+    --c-general-bg:      #374151; --c-general-fg:      #d1d5db;
+    --c-devops-bg:       #14532d; --c-devops-fg:       #86efac;
+    --c-spec-ops-bg:     #312e81; --c-spec-ops-fg:     #a5b4fc;
+    --c-quality-bg:      #164e63; --c-quality-fg:      #67e8f9;
+    --c-security-bg:     #5c1f1f; --c-security-fg:     #fca5a5;
+    --c-integrations-bg: #4a3410; --c-integrations-fg: #fcd34d;
+    --c-tooling-bg:      #4a1d6b; --c-tooling-fg:      #d8b4fe;
+    --c-frontend-bg:     #61123b; --c-frontend-fg:     #f9a8d4;
+    --c-other-bg:        #2d3748; --c-other-fg:        #9ca3af;
   }
 }
 
@@ -537,6 +725,15 @@ def render_styles_css() -> str:
   --c-candidata-bg: #4a3410; --c-candidata-fg: #fcd34d;
   --c-aprovada-bg:  #14532d; --c-aprovada-fg:  #86efac;
   --c-rejeitada-bg: #5c1f1f; --c-rejeitada-fg: #fca5a5;
+  --c-general-bg:      #374151; --c-general-fg:      #d1d5db;
+  --c-devops-bg:       #14532d; --c-devops-fg:       #86efac;
+  --c-spec-ops-bg:     #312e81; --c-spec-ops-fg:     #a5b4fc;
+  --c-quality-bg:      #164e63; --c-quality-fg:      #67e8f9;
+  --c-security-bg:     #5c1f1f; --c-security-fg:     #fca5a5;
+  --c-integrations-bg: #4a3410; --c-integrations-fg: #fcd34d;
+  --c-tooling-bg:      #4a1d6b; --c-tooling-fg:      #d8b4fe;
+  --c-frontend-bg:     #61123b; --c-frontend-fg:     #f9a8d4;
+  --c-other-bg:        #2d3748; --c-other-fg:        #9ca3af;
 }
 
 * { box-sizing: border-box; }
@@ -691,6 +888,39 @@ label input, label select {
 .badge-candidata { background: var(--c-candidata-bg); color: var(--c-candidata-fg); }
 .badge-aprovada  { background: var(--c-aprovada-bg);  color: var(--c-aprovada-fg); }
 .badge-rejeitada { background: var(--c-rejeitada-bg); color: var(--c-rejeitada-fg); }
+
+.badge-kind { background: var(--border); color: var(--body-txt); }
+.badge-general      { background: var(--c-general-bg);      color: var(--c-general-fg); }
+.badge-devops       { background: var(--c-devops-bg);       color: var(--c-devops-fg); }
+.badge-spec-ops     { background: var(--c-spec-ops-bg);     color: var(--c-spec-ops-fg); }
+.badge-quality      { background: var(--c-quality-bg);      color: var(--c-quality-fg); }
+.badge-security     { background: var(--c-security-bg);     color: var(--c-security-fg); }
+.badge-integrations { background: var(--c-integrations-bg); color: var(--c-integrations-fg); }
+.badge-tooling      { background: var(--c-tooling-bg);      color: var(--c-tooling-fg); }
+.badge-frontend     { background: var(--c-frontend-bg);     color: var(--c-frontend-fg); }
+.badge-other        { background: var(--c-other-bg);        color: var(--c-other-fg); }
+
+.purpose-section { margin-bottom: 1.5rem; }
+.section-head {
+  font-size: .85rem;
+  font-weight: 600;
+  padding: .4rem .7rem;
+  margin-bottom: .6rem;
+  border-radius: 8px;
+  border-left: 4px solid var(--border);
+}
+.section-head.purpose-general      { border-left-color: var(--c-general-fg);      background: var(--c-general-bg);      color: var(--c-general-fg); }
+.section-head.purpose-devops       { border-left-color: var(--c-devops-fg);       background: var(--c-devops-bg);       color: var(--c-devops-fg); }
+.section-head.purpose-spec-ops     { border-left-color: var(--c-spec-ops-fg);     background: var(--c-spec-ops-bg);     color: var(--c-spec-ops-fg); }
+.section-head.purpose-quality      { border-left-color: var(--c-quality-fg);      background: var(--c-quality-bg);      color: var(--c-quality-fg); }
+.section-head.purpose-security     { border-left-color: var(--c-security-fg);     background: var(--c-security-bg);     color: var(--c-security-fg); }
+.section-head.purpose-integrations { border-left-color: var(--c-integrations-fg); background: var(--c-integrations-bg); color: var(--c-integrations-fg); }
+.section-head.purpose-tooling      { border-left-color: var(--c-tooling-fg);      background: var(--c-tooling-bg);      color: var(--c-tooling-fg); }
+.section-head.purpose-frontend     { border-left-color: var(--c-frontend-fg);     background: var(--c-frontend-bg);     color: var(--c-frontend-fg); }
+.section-head.purpose-other        { border-left-color: var(--c-other-fg);        background: var(--c-other-bg);        color: var(--c-other-fg); }
+
+.card-meta a { color: var(--accent); text-decoration: none; }
+.card-meta a:hover { text-decoration: underline; }
 
 /* ---- Botoes ---- */
 .btn {

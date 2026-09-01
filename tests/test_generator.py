@@ -82,5 +82,41 @@ class TestBuildSite(unittest.TestCase):
                 generator.build_site(items_path, out_dir)
 
 
+class TestRenderAppJsFilters(unittest.TestCase):
+    def test_defines_kind_and_purpose_lists(self):
+        js = generator.render_app_js()
+        self.assertIn('const KINDS = ["skill", "agent", "command", "plugin", "mcp"]', js)
+        self.assertIn("spec-ops", js)
+
+    def test_renders_purpose_sections(self):
+        js = generator.render_app_js()
+        self.assertIn("function renderSections(", js)
+
+    def test_card_shows_stars_and_repo_link(self):
+        js = generator.render_app_js()
+        self.assertIn("item.stars", js)
+        self.assertIn('target = "_blank"', js.replace("target=", "target ="))  # tolerant of formatting
+
+    def test_modal_has_refresh_button(self):
+        js = generator.render_app_js()
+        self.assertIn("refresh_repo", js)
+        self.assertIn("atualizar do GitHub", js)
+
+
+class TestRenderStylesCssPurpose(unittest.TestCase):
+    def test_defines_purpose_color_tokens(self):
+        css = generator.render_styles_css()
+        for token in (
+            "--c-general-fg", "--c-devops-fg", "--c-spec-ops-fg", "--c-quality-fg",
+            "--c-security-fg", "--c-integrations-fg", "--c-tooling-fg",
+            "--c-frontend-fg", "--c-other-fg",
+        ):
+            self.assertIn(token, css)
+
+    def test_defines_section_header_class(self):
+        css = generator.render_styles_css()
+        self.assertIn(".section-head", css)
+
+
 if __name__ == "__main__":
     unittest.main()
