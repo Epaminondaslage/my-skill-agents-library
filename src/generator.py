@@ -961,19 +961,21 @@ label input, label select {
 .section-head.purpose-frontend     { border-left-color: var(--c-frontend-fg);     background: var(--c-frontend-bg);     color: var(--c-frontend-fg); }
 .section-head.purpose-other        { border-left-color: var(--c-other-fg);        background: var(--c-other-bg);        color: var(--c-other-fg); }
 
-/* ---- Pills de filtro por purpose, mesma cor do badge/section-head ---- */
-.pill-purpose-general      { background: var(--c-general-bg);      color: var(--c-general-fg);      border-color: var(--c-general-fg); }
-.pill-purpose-devops       { background: var(--c-devops-bg);       color: var(--c-devops-fg);       border-color: var(--c-devops-fg); }
-.pill-purpose-spec-ops     { background: var(--c-spec-ops-bg);     color: var(--c-spec-ops-fg);     border-color: var(--c-spec-ops-fg); }
-.pill-purpose-quality      { background: var(--c-quality-bg);      color: var(--c-quality-fg);      border-color: var(--c-quality-fg); }
-.pill-purpose-security     { background: var(--c-security-bg);     color: var(--c-security-fg);     border-color: var(--c-security-fg); }
-.pill-purpose-integrations { background: var(--c-integrations-bg); color: var(--c-integrations-fg); border-color: var(--c-integrations-fg); }
-.pill-purpose-tooling      { background: var(--c-tooling-bg);      color: var(--c-tooling-fg);      border-color: var(--c-tooling-fg); }
-.pill-purpose-frontend     { background: var(--c-frontend-bg);     color: var(--c-frontend-fg);     border-color: var(--c-frontend-fg); }
-.pill-purpose-other        { background: var(--c-other-bg);        color: var(--c-other-fg);        border-color: var(--c-other-fg); }
-.pill-purpose-general.btn-primary, .pill-purpose-devops.btn-primary, .pill-purpose-spec-ops.btn-primary,
-.pill-purpose-quality.btn-primary, .pill-purpose-security.btn-primary, .pill-purpose-integrations.btn-primary,
-.pill-purpose-tooling.btn-primary, .pill-purpose-frontend.btn-primary, .pill-purpose-other.btn-primary {
+/* ---- Pills de filtro por purpose, mesma cor do badge/section-head ----
+   button.pill-purpose-* (elemento + classe) para vencer .btn na cascata:
+   mesma especificidade de classe sozinha perderia por ordem de declaração. */
+button.pill-purpose-general      { background: var(--c-general-bg);      color: var(--c-general-fg);      border-color: var(--c-general-fg); }
+button.pill-purpose-devops       { background: var(--c-devops-bg);       color: var(--c-devops-fg);       border-color: var(--c-devops-fg); }
+button.pill-purpose-spec-ops     { background: var(--c-spec-ops-bg);     color: var(--c-spec-ops-fg);     border-color: var(--c-spec-ops-fg); }
+button.pill-purpose-quality      { background: var(--c-quality-bg);      color: var(--c-quality-fg);      border-color: var(--c-quality-fg); }
+button.pill-purpose-security     { background: var(--c-security-bg);     color: var(--c-security-fg);     border-color: var(--c-security-fg); }
+button.pill-purpose-integrations { background: var(--c-integrations-bg); color: var(--c-integrations-fg); border-color: var(--c-integrations-fg); }
+button.pill-purpose-tooling      { background: var(--c-tooling-bg);      color: var(--c-tooling-fg);      border-color: var(--c-tooling-fg); }
+button.pill-purpose-frontend     { background: var(--c-frontend-bg);     color: var(--c-frontend-fg);     border-color: var(--c-frontend-fg); }
+button.pill-purpose-other        { background: var(--c-other-bg);        color: var(--c-other-fg);        border-color: var(--c-other-fg); }
+button.pill-purpose-general.btn-primary, button.pill-purpose-devops.btn-primary, button.pill-purpose-spec-ops.btn-primary,
+button.pill-purpose-quality.btn-primary, button.pill-purpose-security.btn-primary, button.pill-purpose-integrations.btn-primary,
+button.pill-purpose-tooling.btn-primary, button.pill-purpose-frontend.btn-primary, button.pill-purpose-other.btn-primary {
   box-shadow: inset 0 0 0 2px currentColor;
 }
 

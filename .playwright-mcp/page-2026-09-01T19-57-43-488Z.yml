@@ -1,0 +1,607 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - heading "My Skill-Agents Library" [level=1] [ref=e4]
+    - generic [ref=e5]:
+      - generic [ref=e6]: 30 items
+      - button "☾" [ref=e7] [cursor=pointer]
+  - generic [ref=e8]:
+    - generic [ref=e9]:
+      - button "todas" [ref=e10] [cursor=pointer]
+      - button "candidata" [ref=e11] [cursor=pointer]
+      - button "aprovada" [ref=e12] [cursor=pointer]
+      - button "rejeitada" [ref=e13] [cursor=pointer]
+    - generic [ref=e14]:
+      - button "Todos 30" [ref=e15] [cursor=pointer]
+      - button "Skills 25" [ref=e16] [cursor=pointer]
+      - button "Agents 3" [ref=e17] [cursor=pointer]
+      - button "Commands 0" [ref=e18] [cursor=pointer]
+      - button "Plugins 0" [ref=e19] [cursor=pointer]
+      - button "MCPs 2" [ref=e20] [cursor=pointer]
+    - generic [ref=e21]:
+      - button "Todos 30" [ref=e22] [cursor=pointer]
+      - button "General 0" [ref=e23] [cursor=pointer]
+      - button "DevOps 0" [ref=e24] [cursor=pointer]
+      - button "Spec-Driven Ops 2" [ref=e25] [cursor=pointer]
+      - button "Quality 5" [ref=e26] [cursor=pointer]
+      - button "Security 0" [ref=e27] [cursor=pointer]
+      - button "Integrations 0" [ref=e28] [cursor=pointer]
+      - button "Tooling 5" [ref=e29] [cursor=pointer]
+      - button "Frontend 5" [ref=e30] [cursor=pointer]
+      - button "Other 13" [ref=e31] [cursor=pointer]
+    - generic [ref=e32]:
+      - button "Padrão" [ref=e33] [cursor=pointer]
+      - button "Mais estrelas" [ref=e34] [cursor=pointer]
+      - button "Atualização recente" [ref=e35] [cursor=pointer]
+      - button "Nome" [ref=e36] [cursor=pointer]
+    - generic [ref=e37]:
+      - heading "adicionar item" [level=2] [ref=e38]
+      - generic [ref=e39]:
+        - generic [ref=e40]:
+          - text: name
+          - textbox "name" [ref=e41]
+        - generic [ref=e42]:
+          - text: repo
+          - textbox "repo" [ref=e43]
+        - generic [ref=e44]:
+          - text: function
+          - textbox "function" [ref=e45]
+        - generic [ref=e46]:
+          - text: dev_note
+          - textbox "dev_note" [ref=e47]
+      - button "adicionar" [ref=e49] [cursor=pointer]
+    - generic [ref=e50]:
+      - generic [ref=e51]:
+        - generic [ref=e52]: Spec-Driven Ops (2)
+        - generic [ref=e53]:
+          - generic [ref=e54] [cursor=pointer]:
+            - generic [ref=e55]:
+              - generic [ref=e56]: superpowers
+              - generic [ref=e57]: aprovada
+              - generic [ref=e58]: Skills
+              - generic [ref=e59]: Spec-Driven Ops
+            - generic [ref=e60]: Framework de skills agentic e metodologia de dev (brainstorm, TDD, debug sistemático)
+            - generic [ref=e61]:
+              - generic [ref=e62]:
+                - generic [ref=e63]: ★
+                - generic [ref=e64]: "280355"
+              - text: ·
+              - link "obra/superpowers" [ref=e65]:
+                - /url: https://github.com/obra/superpowers
+            - combobox [ref=e67]:
+              - option "candidata"
+              - option "aprovada" [selected]
+              - option "rejeitada"
+          - generic [ref=e68] [cursor=pointer]:
+            - generic [ref=e69]:
+              - generic [ref=e70]: awesome-claude-skills
+              - generic [ref=e71]: aprovada
+              - generic [ref=e72]: Skills
+              - generic [ref=e73]: Spec-Driven Ops
+            - generic [ref=e74]: Lista curada de skills e recursos p/ workflows Claude
+            - generic [ref=e75]:
+              - generic [ref=e76]:
+                - generic [ref=e77]: ★
+                - generic [ref=e78]: "14924"
+              - text: ·
+              - link "travisvn/awesome-claude-skills" [ref=e79]:
+                - /url: https://github.com/travisvn/awesome-claude-skills
+            - combobox [ref=e81]:
+              - option "candidata"
+              - option "aprovada" [selected]
+              - option "rejeitada"
+      - generic [ref=e82]:
+        - generic [ref=e83]: Quality (5)
+        - generic [ref=e84]:
+          - generic [ref=e85] [cursor=pointer]:
+            - generic [ref=e86]:
+              - generic [ref=e87]: grill-me
+              - generic [ref=e88]: aprovada
+              - generic [ref=e89]: Skills
+              - generic [ref=e90]: Quality
+            - generic [ref=e91]: Questionar e validar arquitetura e planos antes da implementação
+            - generic [ref=e92]:
+              - generic [ref=e93]:
+                - generic [ref=e94]: ★
+                - generic [ref=e95]: "243754"
+              - text: ·
+              - link "mattpocock/skills" [ref=e96]:
+                - /url: https://github.com/mattpocock/skills
+            - combobox [ref=e98]:
+              - option "candidata"
+              - option "aprovada" [selected]
+              - option "rejeitada"
+          - generic [ref=e99] [cursor=pointer]:
+            - generic [ref=e100]:
+              - generic [ref=e101]: web-design-guidelines
+              - generic [ref=e102]: candidata
+              - generic [ref=e103]: Skills
+              - generic [ref=e104]: Quality
+            - generic [ref=e105]: Auditoria de UI, UX e acessibilidade
+            - generic [ref=e106]:
+              - generic [ref=e107]:
+                - generic [ref=e108]: ★
+                - generic [ref=e109]: "30712"
+              - text: ·
+              - link "vercel-labs/agent-skills" [ref=e110]:
+                - /url: https://github.com/vercel-labs/agent-skills
+            - combobox [ref=e112]:
+              - option "candidata" [selected]
+              - option "aprovada"
+              - option "rejeitada"
+          - generic [ref=e113] [cursor=pointer]:
+            - generic [ref=e114]:
+              - generic [ref=e115]: agent-browser
+              - generic [ref=e116]: aprovada
+              - generic [ref=e117]: Agents
+              - generic [ref=e118]: Quality
+            - generic [ref=e119]: Automação de navegador, testes e QA
+            - generic [ref=e120]:
+              - generic [ref=e121]:
+                - generic [ref=e122]: ★
+                - generic [ref=e123]: "41694"
+              - text: ·
+              - link "vercel-labs/agent-browser" [ref=e124]:
+                - /url: https://github.com/vercel-labs/agent-browser
+            - combobox [ref=e126]:
+              - option "candidata"
+              - option "aprovada" [selected]
+              - option "rejeitada"
+          - generic [ref=e127] [cursor=pointer]:
+            - generic [ref=e128]:
+              - generic [ref=e129]: seo-audit
+              - generic [ref=e130]: candidata
+              - generic [ref=e131]: Skills
+              - generic [ref=e132]: Quality
+            - generic [ref=e133]: Auditoria técnica de SEO
+            - generic [ref=e134]:
+              - generic [ref=e135]:
+                - generic [ref=e136]: ★
+                - generic [ref=e137]: "46442"
+              - text: ·
+              - link "coreyhaines31/marketingskills" [ref=e138]:
+                - /url: https://github.com/coreyhaines31/marketingskills
+            - combobox [ref=e140]:
+              - option "candidata" [selected]
+              - option "aprovada"
+              - option "rejeitada"
+          - generic [ref=e141] [cursor=pointer]:
+            - generic [ref=e142]:
+              - generic [ref=e143]: playwright
+              - generic [ref=e144]: aprovada
+              - generic [ref=e145]: Skills
+              - generic [ref=e146]: Quality
+            - generic [ref=e147]: Automação e teste web (Chromium/Firefox/WebKit)
+            - generic [ref=e148]:
+              - generic [ref=e149]:
+                - generic [ref=e150]: ★
+                - generic [ref=e151]: "95481"
+              - text: ·
+              - link "microsoft/playwright" [ref=e152]:
+                - /url: https://github.com/microsoft/playwright
+            - combobox [ref=e154]:
+              - option "candidata"
+              - option "aprovada" [selected]
+              - option "rejeitada"
+      - generic [ref=e155]:
+        - generic [ref=e156]: Tooling (5)
+        - generic [ref=e157]:
+          - generic [ref=e158] [cursor=pointer]:
+            - generic [ref=e159]:
+              - generic [ref=e160]: agents
+              - generic [ref=e161]: candidata
+              - generic [ref=e162]: Agents
+              - generic [ref=e163]: Tooling
+            - generic [ref=e164]: Marketplace multi-harness de subagentes (Claude Code, Codex, Cursor, etc.)
+            - generic [ref=e165]:
+              - generic [ref=e166]:
+                - generic [ref=e167]: ★
+                - generic [ref=e168]: "39331"
+              - text: ·
+              - link "wshobson/agents" [ref=e169]:
+                - /url: https://github.com/wshobson/agents
+            - combobox [ref=e171]:
+              - option "candidata" [selected]
+              - option "aprovada"
+              - option "rejeitada"
+          - generic [ref=e172] [cursor=pointer]:
+            - generic [ref=e173]:
+              - generic [ref=e174]: claude-code-hooks-mastery
+              - generic [ref=e175]: aprovada
+              - generic [ref=e176]: Skills
+              - generic [ref=e177]: Tooling
+            - generic [ref=e178]: Domínio de hooks (lifecycle events) do Claude Code
+            - generic [ref=e179]:
+              - generic [ref=e180]:
+                - generic [ref=e181]: ★
+                - generic [ref=e182]: "3907"
+              - text: ·
+              - link "disler/claude-code-hooks-mastery" [ref=e183]:
+                - /url: https://github.com/disler/claude-code-hooks-mastery
+            - combobox [ref=e185]:
+              - option "candidata"
+              - option "aprovada" [selected]
+              - option "rejeitada"
+          - generic [ref=e186] [cursor=pointer]:
+            - generic [ref=e187]:
+              - generic [ref=e188]: my-claude-code-setup
+              - generic [ref=e189]: aprovada
+              - generic [ref=e190]: Skills
+              - generic [ref=e191]: Tooling
+            - generic [ref=e192]: Template CLAUDE.md e config inicial p/ Claude Code
+            - generic [ref=e193]:
+              - generic [ref=e194]:
+                - generic [ref=e195]: ★
+                - generic [ref=e196]: "2614"
+              - text: ·
+              - link "centminmod/my-claude-code-setup" [ref=e197]:
+                - /url: https://github.com/centminmod/my-claude-code-setup
+            - combobox [ref=e199]:
+              - option "candidata"
+              - option "aprovada" [selected]
+              - option "rejeitada"
+          - generic [ref=e200] [cursor=pointer]:
+            - generic [ref=e201]:
+              - generic [ref=e202]: claude-code-mcp
+              - generic [ref=e203]: aprovada
+              - generic [ref=e204]: MCPs
+              - generic [ref=e205]: Tooling
+            - generic [ref=e206]: Claude Code como servidor MCP one-shot dentro de outro agente
+            - generic [ref=e207]:
+              - generic [ref=e208]:
+                - generic [ref=e209]: ★
+                - generic [ref=e210]: "1314"
+              - text: ·
+              - link "steipete/claude-code-mcp" [ref=e211]:
+                - /url: https://github.com/steipete/claude-code-mcp
+            - combobox [ref=e213]:
+              - option "candidata"
+              - option "aprovada" [selected]
+              - option "rejeitada"
+          - generic [ref=e214] [cursor=pointer]:
+            - generic [ref=e215]:
+              - generic [ref=e216]: easier-life-skills
+              - generic [ref=e217]: candidata
+              - generic [ref=e218]: Skills
+              - generic [ref=e219]: Tooling
+            - generic [ref=e220]: Skill p/ recomendar outras skills relevantes ao projeto ativo
+            - generic [ref=e221]:
+              - generic [ref=e222]:
+                - generic [ref=e223]: ★
+                - generic [ref=e224]: "7"
+              - text: ·
+              - link "dan323/easier-life-skills" [ref=e225]:
+                - /url: https://github.com/dan323/easier-life-skills
+            - combobox [ref=e227]:
+              - option "candidata" [selected]
+              - option "aprovada"
+              - option "rejeitada"
+      - generic [ref=e228]:
+        - generic [ref=e229]: Frontend (5)
+        - generic [ref=e230]:
+          - generic [ref=e231] [cursor=pointer]:
+            - generic [ref=e232]:
+              - generic [ref=e233]: anti-ui-slop
+              - generic [ref=e234]: candidata
+              - generic [ref=e235]: Skills
+              - generic [ref=e236]: Frontend
+            - generic [ref=e237]: Evitar interfaces genéricas produzidas por IA
+            - generic [ref=e238]:
+              - generic [ref=e239]:
+                - generic [ref=e240]: ★
+                - generic [ref=e241]: "16"
+              - text: ·
+              - link "uizze/uizze" [ref=e242]:
+                - /url: https://github.com/uizze/uizze
+            - combobox [ref=e244]:
+              - option "candidata" [selected]
+              - option "aprovada"
+              - option "rejeitada"
+          - generic [ref=e245] [cursor=pointer]:
+            - generic [ref=e246]:
+              - generic [ref=e247]: minimalist-ui
+              - generic [ref=e248]: candidata
+              - generic [ref=e249]: Skills
+              - generic [ref=e250]: Frontend
+            - generic [ref=e251]: Criação de interfaces minimalistas
+            - generic [ref=e252]:
+              - generic [ref=e253]:
+                - generic [ref=e254]: ★
+                - generic [ref=e255]: "83220"
+              - text: ·
+              - link "Leonxlnx/taste-skill" [ref=e256]:
+                - /url: https://github.com/Leonxlnx/taste-skill
+            - combobox [ref=e258]:
+              - option "candidata" [selected]
+              - option "aprovada"
+              - option "rejeitada"
+          - generic [ref=e259] [cursor=pointer]:
+            - generic [ref=e260]:
+              - generic [ref=e261]: ui-ux-pro-max
+              - generic [ref=e262]: candidata
+              - generic [ref=e263]: Skills
+              - generic [ref=e264]: Frontend
+            - generic [ref=e265]: Design system, UI/UX e implementação de interfaces
+            - generic [ref=e266]:
+              - generic [ref=e267]:
+                - generic [ref=e268]: ★
+                - generic [ref=e269]: "123794"
+              - text: ·
+              - link "nextlevelbuilder/ui-ux-pro-max-skill" [ref=e270]:
+                - /url: https://github.com/nextlevelbuilder/ui-ux-pro-max-skill
+            - combobox [ref=e272]:
+              - option "candidata" [selected]
+              - option "aprovada"
+              - option "rejeitada"
+          - generic [ref=e273] [cursor=pointer]:
+            - generic [ref=e274]:
+              - generic [ref=e275]: canvas-design
+              - generic [ref=e276]: candidata
+              - generic [ref=e277]: Skills
+              - generic [ref=e278]: Frontend
+            - generic [ref=e279]: Criação de artefatos visuais e design
+            - generic [ref=e280]:
+              - generic [ref=e281]:
+                - generic [ref=e282]: ★
+                - generic [ref=e283]: "172971"
+              - text: ·
+              - link "anthropics/skills" [ref=e284]:
+                - /url: https://github.com/anthropics/skills
+            - combobox [ref=e286]:
+              - option "candidata" [selected]
+              - option "aprovada"
+              - option "rejeitada"
+          - generic [ref=e287] [cursor=pointer]:
+            - generic [ref=e288]:
+              - generic [ref=e289]: magic-mcp
+              - generic [ref=e290]: candidata
+              - generic [ref=e291]: MCPs
+              - generic [ref=e292]: Frontend
+            - generic [ref=e293]: Geração de componentes UI React/Tailwind via IA
+            - generic [ref=e294]:
+              - generic [ref=e295]:
+                - generic [ref=e296]: ★
+                - generic [ref=e297]: "5769"
+              - text: ·
+              - link "21st-dev/magic-mcp" [ref=e298]:
+                - /url: https://github.com/21st-dev/magic-mcp
+            - combobox [ref=e300]:
+              - option "candidata" [selected]
+              - option "aprovada"
+              - option "rejeitada"
+      - generic [ref=e301]:
+        - generic [ref=e302]: Other (13)
+        - generic [ref=e303]:
+          - generic [ref=e304] [cursor=pointer]:
+            - generic [ref=e305]:
+              - generic [ref=e306]: content-strategy
+              - generic [ref=e307]: aprovada
+              - generic [ref=e308]: Skills
+              - generic [ref=e309]: Other
+            - generic [ref=e310]: Estratégia e planejamento de conteúdo
+            - generic [ref=e311]:
+              - generic [ref=e312]:
+                - generic [ref=e313]: ★
+                - generic [ref=e314]: "46442"
+              - text: ·
+              - link "coreyhaines31/marketingskills" [ref=e315]:
+                - /url: https://github.com/coreyhaines31/marketingskills
+            - combobox [ref=e317]:
+              - option "candidata"
+              - option "aprovada" [selected]
+              - option "rejeitada"
+          - generic [ref=e318] [cursor=pointer]:
+            - generic [ref=e319]:
+              - generic [ref=e320]: caveman
+              - generic [ref=e321]: candidata
+              - generic [ref=e322]: Skills
+              - generic [ref=e323]: Other
+            - generic [ref=e324]: Comunicação técnica compacta com agentes
+            - generic [ref=e325]:
+              - generic [ref=e326]:
+                - generic [ref=e327]: ★
+                - generic [ref=e328]: "102225"
+              - text: ·
+              - link "juliusbrussee/caveman" [ref=e329]:
+                - /url: https://github.com/JuliusBrussee/caveman
+            - combobox [ref=e331]:
+              - option "candidata" [selected]
+              - option "aprovada"
+              - option "rejeitada"
+          - generic [ref=e332] [cursor=pointer]:
+            - generic [ref=e333]:
+              - generic [ref=e334]: video-lens
+              - generic [ref=e335]: candidata
+              - generic [ref=e336]: Skills
+              - generic [ref=e337]: Other
+            - generic [ref=e338]: Analisar vídeos, transcrever e gerar relatórios
+            - generic [ref=e339]:
+              - generic [ref=e340]:
+                - generic [ref=e341]: ★
+                - generic [ref=e342]: "107"
+              - text: ·
+              - link "kar2phi/video-lens" [ref=e343]:
+                - /url: https://github.com/kar2phi/video-lens
+            - combobox [ref=e345]:
+              - option "candidata" [selected]
+              - option "aprovada"
+              - option "rejeitada"
+          - generic [ref=e346] [cursor=pointer]:
+            - generic [ref=e347]:
+              - generic [ref=e348]: ai-seo
+              - generic [ref=e349]: candidata
+              - generic [ref=e350]: Skills
+              - generic [ref=e351]: Other
+            - generic [ref=e352]: SEO direcionado a mecanismos de IA e LLMs
+            - generic [ref=e353]:
+              - generic [ref=e354]:
+                - generic [ref=e355]: ★
+                - generic [ref=e356]: "46442"
+              - text: ·
+              - link "coreyhaines31/marketingskills" [ref=e357]:
+                - /url: https://github.com/coreyhaines31/marketingskills
+            - combobox [ref=e359]:
+              - option "candidata" [selected]
+              - option "aprovada"
+              - option "rejeitada"
+          - generic [ref=e360] [cursor=pointer]:
+            - generic [ref=e361]:
+              - generic [ref=e362]: video-use
+              - generic [ref=e363]: candidata
+              - generic [ref=e364]: Skills
+              - generic [ref=e365]: Other
+            - generic [ref=e366]: Edição de vídeo controlada por agente
+            - generic [ref=e367]:
+              - generic [ref=e368]:
+                - generic [ref=e369]: ★
+                - generic [ref=e370]: "22758"
+              - text: ·
+              - link "browser-use/video-use" [ref=e371]:
+                - /url: https://github.com/browser-use/video-use
+            - combobox [ref=e373]:
+              - option "candidata" [selected]
+              - option "aprovada"
+              - option "rejeitada"
+          - generic [ref=e374] [cursor=pointer]:
+            - generic [ref=e375]:
+              - generic [ref=e376]: pricing
+              - generic [ref=e377]: candidata
+              - generic [ref=e378]: Skills
+              - generic [ref=e379]: Other
+            - generic [ref=e380]: Estratégia de preços e monetização
+            - generic [ref=e381]:
+              - generic [ref=e382]:
+                - generic [ref=e383]: ★
+                - generic [ref=e384]: "46442"
+              - text: ·
+              - link "coreyhaines31/marketingskills" [ref=e385]:
+                - /url: https://github.com/coreyhaines31/marketingskills
+            - combobox [ref=e387]:
+              - option "candidata" [selected]
+              - option "aprovada"
+              - option "rejeitada"
+          - generic [ref=e388] [cursor=pointer]:
+            - generic [ref=e389]:
+              - generic [ref=e390]: find-skills
+              - generic [ref=e391]: aprovada
+              - generic [ref=e392]: Agents
+              - generic [ref=e393]: Other
+            - generic [ref=e394]: Descoberta e instalação de novas Agent Skills
+            - generic [ref=e395]:
+              - generic [ref=e396]:
+                - generic [ref=e397]: ★
+                - generic [ref=e398]: "30180"
+              - text: ·
+              - link "vercel-labs/skills" [ref=e399]:
+                - /url: https://github.com/vercel-labs/skills
+            - combobox [ref=e401]:
+              - option "candidata"
+              - option "aprovada" [selected]
+              - option "rejeitada"
+          - generic [ref=e402] [cursor=pointer]:
+            - generic [ref=e403]:
+              - generic [ref=e404]: humanlayer
+              - generic [ref=e405]: candidata
+              - generic [ref=e406]: Skills
+              - generic [ref=e407]: Other
+            - generic [ref=e408]: Fazer agentes resolverem problemas complexos em codebases grandes
+            - generic [ref=e409]:
+              - generic [ref=e410]:
+                - generic [ref=e411]: ★
+                - generic [ref=e412]: "11358"
+              - text: ·
+              - link "humanlayer/humanlayer" [ref=e413]:
+                - /url: https://github.com/humanlayer/humanlayer
+            - combobox [ref=e415]:
+              - option "candidata" [selected]
+              - option "aprovada"
+              - option "rejeitada"
+          - generic [ref=e416] [cursor=pointer]:
+            - generic [ref=e417]:
+              - generic [ref=e418]: fabric
+              - generic [ref=e419]: candidata
+              - generic [ref=e420]: Skills
+              - generic [ref=e421]: Other
+            - generic [ref=e422]: Framework de prompts modulares crowdsourced p/ resolver problemas com IA
+            - generic [ref=e423]:
+              - generic [ref=e424]:
+                - generic [ref=e425]: ★
+                - generic [ref=e426]: "43708"
+              - text: ·
+              - link "danielmiessler/fabric" [ref=e427]:
+                - /url: https://github.com/danielmiessler/Fabric
+            - combobox [ref=e429]:
+              - option "candidata" [selected]
+              - option "aprovada"
+              - option "rejeitada"
+          - generic [ref=e430] [cursor=pointer]:
+            - generic [ref=e431]:
+              - generic [ref=e432]: awesome-claude-skills
+              - generic [ref=e433]: aprovada
+              - generic [ref=e434]: Skills
+              - generic [ref=e435]: Other
+            - generic [ref=e436]: Lista curada de Claude Skills e recursos
+            - generic [ref=e437]:
+              - generic [ref=e438]:
+                - generic [ref=e439]: ★
+                - generic [ref=e440]: "74215"
+              - text: ·
+              - link "ComposioHQ/awesome-claude-skills" [ref=e441]:
+                - /url: https://github.com/ComposioHQ/awesome-claude-skills
+            - combobox [ref=e443]:
+              - option "candidata"
+              - option "aprovada" [selected]
+              - option "rejeitada"
+          - generic [ref=e444] [cursor=pointer]:
+            - generic [ref=e445]:
+              - generic [ref=e446]: llm
+              - generic [ref=e447]: aprovada
+              - generic [ref=e448]: Skills
+              - generic [ref=e449]: Other
+            - generic [ref=e450]: Acesso e orquestração de LLMs via linha de comando
+            - generic [ref=e451]:
+              - generic [ref=e452]:
+                - generic [ref=e453]: ★
+                - generic [ref=e454]: "12440"
+              - text: ·
+              - link "simonw/llm" [ref=e455]:
+                - /url: https://github.com/simonw/llm
+            - combobox [ref=e457]:
+              - option "candidata"
+              - option "aprovada" [selected]
+              - option "rejeitada"
+          - generic [ref=e458] [cursor=pointer]:
+            - generic [ref=e459]:
+              - generic [ref=e460]: awesome-ai-agents
+              - generic [ref=e461]: aprovada
+              - generic [ref=e462]: Skills
+              - generic [ref=e463]: Other
+            - generic [ref=e464]: Lista curada de agentes autônomos de IA
+            - generic [ref=e465]:
+              - generic [ref=e466]:
+                - generic [ref=e467]: ★
+                - generic [ref=e468]: "29782"
+              - text: ·
+              - link "e2b-dev/awesome-ai-agents" [ref=e469]:
+                - /url: https://github.com/e2b-dev/awesome-ai-agents
+            - combobox [ref=e471]:
+              - option "candidata"
+              - option "aprovada" [selected]
+              - option "rejeitada"
+          - generic [ref=e472] [cursor=pointer]:
+            - generic [ref=e473]:
+              - generic [ref=e474]: awesome-claude-skills
+              - generic [ref=e475]: aprovada
+              - generic [ref=e476]: Skills
+              - generic [ref=e477]: Other
+            - generic [ref=e478]: Lista curada de Claude Skills
+            - generic [ref=e479]:
+              - generic [ref=e480]:
+                - generic [ref=e481]: ★
+                - generic [ref=e482]: "10082"
+              - text: ·
+              - link "BehiSecc/awesome-claude-skills" [ref=e483]:
+                - /url: https://github.com/BehiSecc/awesome-claude-skills
+            - combobox [ref=e485]:
+              - option "candidata"
+              - option "aprovada" [selected]
+              - option "rejeitada"
