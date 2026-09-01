@@ -11,11 +11,57 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
 STATUSES = ("candidata", "aprovada", "rejeitada")
+
+KINDS = ("skill", "agent", "command", "plugin", "mcp")
+PURPOSES = (
+    "general", "devops", "spec-ops", "quality", "security",
+    "integrations", "tooling", "frontend", "other",
+)
+
+# Order matters: first match wins. Checked before PURPOSE_RULES so a name
+# like "github-mcp" is unambiguous about *kind* even though it will also
+# match "integrations" for purpose.
+KIND_RULES = (
+    ("mcp", r"\bmcp\b|mcp server"),
+    ("command", r"^/|slash command"),
+    ("agent", r"\bagent\b|subagent"),
+    ("plugin", r"\bplugin\b|marketplace"),
+)
+
+# Adapted from my-Harness-Library's inventory.py CATEGORY_RULES — same
+# hues/labels so the two catalogs read as one taxonomy.
+PURPOSE_RULES = (
+    ("security",     r"secur|vulnerab|owasp|exploit|cve\b|secret|hardening|pentest"),
+    ("spec-ops",     r"\bspec|plan(o|ning)?\b|roadmap|workflow|task|backlog|scaffold|tdd|brainstorm"),
+    ("devops",       r"deploy|infra|terraform|docker|kubernet|ansible|ci[/-]?cd|pipeline|tunnel|cron|monitor|observab|cost|\bgit\b|worktree|\bcommit|branch|merge|pull request|\bpr\b|rebase"),
+    ("quality",      r"review|audit|lint|refactor|simplif|moderniz|coverage|\btest|verific|valida|dead code|anti-pattern|legacy"),
+    ("integrations", r"\bmcp server\b|connector|integrac|integrat|\bapi\b|webhook|crawl|scrap|browser"),
+    ("tooling",      r"plugin|\bskill\b|\bhook\b|agent sdk|marketplace|claude code|slash command|subagent"),
+    ("frontend",     r"frontend|front-end|\bui\b|\bux\b|design|css|componente|component|artifact"),
+    ("general",      r"document|explica|explain|learn|ensin|escrit|writing|traduz|chat"),
+)
+
+
+def classify_kind(name: str, function: str) -> str:
+    haystack = f"{name} {function}".lower()
+    for kind, pattern in KIND_RULES:
+        if re.search(pattern, haystack):
+            return kind
+    return "skill"
+
+
+def classify_purpose(name: str, function: str) -> str:
+    haystack = f"{name} {function}".lower()
+    for purpose, pattern in PURPOSE_RULES:
+        if re.search(pattern, haystack):
+            return purpose
+    return "other"
 
 HOME = Path(os.environ.get("HOME", "")).expanduser()
 CLAUDE = HOME / ".claude"

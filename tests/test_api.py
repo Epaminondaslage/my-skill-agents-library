@@ -15,6 +15,29 @@ def make_lib(tmp):
     return api.SkillLibrary(items_path=items_path, request_path=request_path)
 
 
+class TestClassify(unittest.TestCase):
+    def test_classify_kind_defaults_to_skill(self):
+        self.assertEqual(api.classify_kind("avoid-ai-writing", "Audit and rewrite content"), "skill")
+
+    def test_classify_kind_detects_mcp(self):
+        self.assertEqual(api.classify_kind("github-mcp", "An MCP server for GitHub"), "mcp")
+
+    def test_classify_kind_detects_agent(self):
+        self.assertEqual(api.classify_kind("cavecrew-investigator", "Read-only subagent"), "agent")
+
+    def test_classify_kind_detects_command(self):
+        self.assertEqual(api.classify_kind("/deploy-prod", "A slash command for prod deploys"), "command")
+
+    def test_classify_kind_detects_plugin(self):
+        self.assertEqual(api.classify_kind("caveman", "An ultra-compressed communication plugin"), "plugin")
+
+    def test_classify_purpose_detects_security(self):
+        self.assertEqual(api.classify_purpose("security-review", "Find vulnerabilities and secrets"), "security")
+
+    def test_classify_purpose_falls_back_to_other(self):
+        self.assertEqual(api.classify_purpose("mystery-thing", "does something unclassifiable xyzzy"), "other")
+
+
 class TestAddItem(unittest.TestCase):
     def test_adds_item_with_candidata_status(self):
         with tempfile.TemporaryDirectory() as tmp:
