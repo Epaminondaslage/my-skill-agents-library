@@ -1,0 +1,25 @@
+[Unit]
+Description=My Skill-Agents Library backend
+After=network.target
+
+[Service]
+Type=simple
+User=@RUN_USER@
+Group=@RUN_GROUP@
+ExecStart=/usr/bin/python3 /opt/skill-agents-library/src/serve.py
+Environment=SKILL_LIBRARY_SOCKET=/run/skill-agents-library/sock
+RuntimeDirectory=skill-agents-library
+RuntimeDirectoryMode=0770
+
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=@USER_HOME@/.claude/.skill-library
+NoNewPrivileges=yes
+PrivateTmp=yes
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
