@@ -64,7 +64,7 @@ const EDITABLE = ["name", "repo", "stars", "function", "dev_note"];
 
 let items = [];
 let filterStatus = null;
-let expanded = new Set(); // ids currently showing the edit form
+let openModalId = null; // id of the item whose modal is open, or null
 
 // ---- tema: claro/escuro/auto, persistido em localStorage -----------------
 function currentTheme() {
@@ -267,11 +267,32 @@ function render() {
   container.appendChild(list);
 
   app.appendChild(container);
+
+  const openItem = items.find((i) => i.id === openModalId);
+  if (openItem) app.appendChild(renderModal(openItem));
 }
 
 function renderItem(item) {
   const card = document.createElement("div");
-  card.className = "card status-" + item.status;
+  card.className = "card editable status-" + item.status;
+  card.tabIndex = 0;
+
+  const openModal = () => {
+    openModalId = item.id;
+    render();
+  };
+  // Any click on the card opens the modal, except on the status select
+  // itself — that stays a fast inline action.
+  card.onclick = (e) => {
+    if (e.target.closest("select")) return;
+    openModal();
+  };
+  card.onkeydown = (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      openModal();
+    }
+  };
 
   const head = document.createElement("div");
   head.className = "card-head";
@@ -285,8 +306,18 @@ function renderItem(item) {
   head.appendChild(badge);
   card.appendChild(head);
 
-  const err = document.createElement("div");
-  err.className = "error";
+  const desc = document.createElement("div");
+  desc.className = "card-desc";
+  desc.textContent = item.function || "";
+  card.appendChild(desc);
+
+  const meta = document.createElement("div");
+  meta.className = "card-meta";
+  meta.textContent = [item.repo, item.stars].filter(Boolean).join(" · ");
+  card.appendChild(meta);
+
+  const actions = document.createElement("div");
+  actions.className = "actions";
 
   const select = document.createElement("select");
   select.className = "status-select";
@@ -298,55 +329,46 @@ function renderItem(item) {
     select.appendChild(opt);
   });
   select.onchange = () => {
-    showError(err, "");
-    call("set_status", { id: item.id, status: select.value }).then(reload, (ex) =>
-      handleError(ex, err)
-    );
+    call("set_status", { id: item.id, status: select.value }).then(reload);
+  };
+  actions.appendChild(select);
+  card.appendChild(actions);
+
+  return card;
+}
+
+// Modal shows every field for one item, all editable, plus status/delete.
+function renderModal(item) {
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.onclick = (e) => {
+    if (e.target === overlay) closeModal();
   };
 
-  if (!expanded.has(item.id)) {
-    // ---- compact view ----
-    const desc = document.createElement("div");
-    desc.className = "card-desc";
-    desc.textContent = item.function || "";
-    card.appendChild(desc);
+  const modal = document.createElement("div");
+  modal.className = "modal";
+  overlay.appendChild(modal);
 
-    const meta = document.createElement("div");
-    meta.className = "card-meta";
-    meta.textContent = [item.repo, item.stars].filter(Boolean).join(" · ");
-    card.appendChild(meta);
+  const header = document.createElement("div");
+  header.className = "modal-header";
+  const title = document.createElement("h2");
+  title.textContent = item.name || "(sem nome)";
+  header.appendChild(title);
+  const closeBtn = document.createElement("button");
+  closeBtn.type = "button";
+  closeBtn.className = "modal-close";
+  closeBtn.textContent = "✕";
+  closeBtn.onclick = closeModal;
+  header.appendChild(closeBtn);
+  modal.appendChild(header);
 
-    const actions = document.createElement("div");
-    actions.className = "actions";
-    actions.appendChild(select);
+  const body = document.createElement("div");
+  body.className = "modal-body";
+  modal.appendChild(body);
 
-    const edit = document.createElement("button");
-    edit.type = "button";
-    edit.className = "btn btn-sm";
-    edit.textContent = "editar";
-    edit.onclick = () => {
-      expanded.add(item.id);
-      render();
-    };
-    actions.appendChild(edit);
+  const err = document.createElement("div");
+  err.className = "error";
 
-    const del = document.createElement("button");
-    del.type = "button";
-    del.className = "btn btn-sm danger";
-    del.textContent = "excluir";
-    del.onclick = () => {
-      if (!window.confirm("excluir \\"" + item.name + "\\"?")) return;
-      showError(err, "");
-      call("delete", { id: item.id }).then(reload, (ex) => handleError(ex, err));
-    };
-    actions.appendChild(del);
-
-    card.appendChild(actions);
-    card.appendChild(err);
-    return card;
-  }
-
-  // ---- edit view ----
   const fields = {};
   EDITABLE.forEach((field) => {
     const label = document.createElement("label");
@@ -355,26 +377,35 @@ function renderItem(item) {
     input.type = "text";
     input.value = item[field] || "";
     label.appendChild(input);
-    card.appendChild(label);
+    body.appendChild(label);
     fields[field] = input;
   });
 
-  card.appendChild(select);
+  const statusLabel = document.createElement("label");
+  statusLabel.textContent = "status";
+  const select = document.createElement("select");
+  STATUSES.forEach((s) => {
+    const opt = document.createElement("option");
+    opt.value = s;
+    opt.textContent = STATUS_LABEL[s];
+    opt.selected = s === item.status;
+    select.appendChild(opt);
+  });
+  statusLabel.appendChild(select);
+  body.appendChild(statusLabel);
 
+  const noteLabel = document.createElement("label");
+  noteLabel.textContent = "nota pessoal";
   const note = document.createElement("textarea");
-  note.placeholder = "nota pessoal";
   note.value = item.personal_note || "";
-  note.onblur = () => {
-    if (note.value === (item.personal_note || "")) return;
-    showError(err, "");
-    call("set_note", { id: item.id, personal_note: note.value }).then((updated) => {
-      item.personal_note = updated.personal_note;
-    }, (ex) => handleError(ex, err));
-  };
-  card.appendChild(note);
+  noteLabel.appendChild(note);
+  body.appendChild(noteLabel);
+
+  body.appendChild(err);
 
   const actions = document.createElement("div");
   actions.className = "actions";
+  modal.appendChild(actions);
 
   const save = document.createElement("button");
   save.type = "button";
@@ -382,23 +413,25 @@ function renderItem(item) {
   save.textContent = "salvar";
   save.onclick = () => {
     showError(err, "");
-    const body = { id: item.id };
+    const body2 = { id: item.id };
     EDITABLE.forEach((f) => {
-      body[f] = fields[f].value;
+      body2[f] = fields[f].value;
     });
-    call("edit", body).then(reload, (ex) => handleError(ex, err));
+    Promise.all([
+      call("edit", body2),
+      select.value !== item.status
+        ? call("set_status", { id: item.id, status: select.value })
+        : Promise.resolve(),
+      note.value !== (item.personal_note || "")
+        ? call("set_note", { id: item.id, personal_note: note.value })
+        : Promise.resolve(),
+    ])
+      .then(() => {
+        closeModal();
+        reload();
+      }, (ex) => handleError(ex, err));
   };
   actions.appendChild(save);
-
-  const close = document.createElement("button");
-  close.type = "button";
-  close.className = "btn btn-sm";
-  close.textContent = "fechar";
-  close.onclick = () => {
-    expanded.delete(item.id);
-    render();
-  };
-  actions.appendChild(close);
 
   const del = document.createElement("button");
   del.type = "button";
@@ -407,14 +440,24 @@ function renderItem(item) {
   del.onclick = () => {
     if (!window.confirm("excluir \\"" + item.name + "\\"?")) return;
     showError(err, "");
-    call("delete", { id: item.id }).then(reload, (ex) => handleError(ex, err));
+    call("delete", { id: item.id }).then(() => {
+      closeModal();
+      reload();
+    }, (ex) => handleError(ex, err));
   };
   actions.appendChild(del);
 
-  card.appendChild(actions);
-  card.appendChild(err);
-  return card;
+  return overlay;
 }
+
+function closeModal() {
+  openModalId = null;
+  render();
+}
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && openModalId !== null) closeModal();
+});
 
 document.addEventListener("DOMContentLoaded", () => {
   items = loadItems();
@@ -588,6 +631,47 @@ label input, label select {
   color: var(--fg);
   font-size: .78rem;
 }
+
+.card.editable { cursor: pointer; transition: box-shadow .12s, transform .12s; }
+.card.editable:hover { box-shadow: 0 3px 10px var(--shadow); transform: translateY(-1px); }
+.card.editable:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---- Modal (todos os dados de um item) ---- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, .45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 100;
+}
+.modal {
+  background: var(--surface);
+  border-radius: 10px;
+  box-shadow: 0 10px 30px var(--shadow);
+  width: min(480px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 1rem 1.25rem 1.25rem;
+}
+.modal-header { display: flex; justify-content: space-between; align-items: center; gap: .75rem; margin-bottom: .8rem; }
+.modal-header h2 { font-size: 1.05rem; margin: 0; color: var(--strong); word-break: break-word; }
+.modal-close {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--muted);
+  cursor: pointer;
+}
+.modal-close:hover { color: var(--danger); border-color: var(--danger); }
+.modal label { margin-bottom: .7rem; }
 
 .card textarea {
   width: 100%;
