@@ -17,6 +17,8 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
+from api import classify_kind, classify_purpose
+
 ROW_RE = re.compile(r"^\|(.+)\|\s*$")
 
 
@@ -52,14 +54,26 @@ def parse_catalog_markdown(md_text: str) -> list[dict]:
         # columns: # | Skill | Repo | Stars | Installs | Função | Nota Dev
         if len(cells) < 7:
             continue
+        name = _clean_cell(cells[1])
+        repo = _clean_cell(cells[2])
+        function = _clean_cell(cells[5])
+        # The catalog's own "Stars" column is a formatted placeholder
+        # ("242,8K", "~102K", "<1K"), not a real count in a shape we can
+        # parse — same schema as a freshly add_item()'d item: stars starts
+        # at 0 and url/kind/purpose are derived the same way, so a seeded
+        # item is indistinguishable from a manually-added one until
+        # enrich.py (or the modal's per-item refresh) fills in real data.
         items.append(
             {
                 "id": uuid.uuid4().hex,
-                "name": _clean_cell(cells[1]),
-                "repo": _clean_cell(cells[2]),
-                "stars": _clean_cell(cells[3]),
-                "function": _clean_cell(cells[5]),
+                "name": name,
+                "repo": repo,
+                "url": f"https://github.com/{repo}" if repo else "",
+                "stars": 0,
+                "function": function,
                 "dev_note": _clean_cell(cells[6]),
+                "kind": classify_kind(name, function),
+                "purpose": classify_purpose(name, function),
                 "status": "candidata",
                 "personal_note": "",
                 "decided_at": None,

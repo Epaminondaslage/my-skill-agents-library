@@ -34,9 +34,20 @@ class TestParseCatalogMarkdown(unittest.TestCase):
         first = items[0]
         self.assertEqual(first["name"], "grill-me")
         self.assertEqual(first["repo"], "mattpocock/skills")
-        self.assertEqual(first["stars"], "242,8K")
         self.assertEqual(first["function"], "Questionar e validar arquitetura")
         self.assertEqual(first["dev_note"], "10/10")
+
+    def test_stars_url_kind_purpose_match_add_item_schema(self):
+        # The catalog's own "Stars" column is a placeholder, not a real
+        # count — seeded items must share add_item's schema (int stars
+        # starting at 0, derived url, classified kind/purpose) rather than
+        # carrying the raw catalog text through.
+        items = seed.parse_catalog_markdown(SAMPLE_MD)
+        first = items[0]
+        self.assertEqual(first["stars"], 0)
+        self.assertEqual(first["url"], "https://github.com/mattpocock/skills")
+        self.assertIn("kind", first)
+        self.assertIn("purpose", first)
 
     def test_defaults(self):
         items = seed.parse_catalog_markdown(SAMPLE_MD)

@@ -74,7 +74,11 @@ SystemCallFilter=@system-service
 SystemCallFilter=~@privileged @resources @obsolete @mount @debug @swap
 SystemCallErrorNumber=EPERM
 SystemCallArchitectures=native
-RestrictAddressFamilies=AF_UNIX
+# AF_UNIX for nginx; AF_INET/AF_INET6 for refresh_repo's one outbound HTTPS
+# GET to api.github.com (see CLAUDE.md's offline-first exception). No other
+# code path in this service opens a socket, so this is as narrow as the
+# feature allows without dropping it on bare metal.
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
 
 # ---- Resources ------------------------------------------------------------
 MemoryMax=128M
