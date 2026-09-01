@@ -1,0 +1,13 @@
+services:
+  skill-agents-library:
+    build: .
+    container_name: skill-agents-library
+    restart: unless-stopped
+    ports:
+      - "8092:80"
+    volumes:
+      # State (items.json, audit log, regen.request) — persists across
+      # rebuilds/restarts, same path the bare-metal deploy used.
+      - ${HOME}/.claude/.skill-library:/home/app/.claude/.skill-library
+      # Shared auth hash from my-Harness-Library — read-only, never written.
+      - ${HOME}/.claude/.inventory:/home/app/.claude/.inventory:ro
