@@ -32,6 +32,20 @@ HARNESS_AUTH_FILE = CLAUDE / ".inventory" / "auth.hash"
 
 EDITABLE_FIELDS = ("name", "repo", "stars", "function", "dev_note")
 
+# Field length caps. Short identifiers stay short; prose fields get room but
+# are still bounded so one item can never bloat items.json (nor the <script>
+# payload the generator embeds) without limit.
+MAX_SHORT_FIELD = 500  # name, repo, stars, dev_note
+MAX_LONG_FIELD = 5000  # function, personal_note
+FIELD_LIMITS = {
+    "name": MAX_SHORT_FIELD,
+    "repo": MAX_SHORT_FIELD,
+    "stars": MAX_SHORT_FIELD,
+    "dev_note": MAX_SHORT_FIELD,
+    "function": MAX_LONG_FIELD,
+    "personal_note": MAX_LONG_FIELD,
+}
+
 
 class ApiError(Exception):
     """Error carrying the HTTP status and the stable code the UI translates."""
@@ -42,6 +56,16 @@ class ApiError(Exception):
         self.payload = {"error": message}
         if code:
             self.payload["code"] = code
+
+
+def _validate_field(key: str, value) -> str:
+    """Reject non-strings and over-long values before they reach items.json."""
+    if not isinstance(value, str):
+        raise ApiError(400, f"{key} deve ser texto", code="invalid_field")
+    limit = FIELD_LIMITS.get(key, MAX_SHORT_FIELD)
+    if len(value) > limit:
+        raise ApiError(400, f"{key} excede {limit} caracteres", code="invalid_field")
+    return value
 
 
 def _now() -> str:
@@ -103,17 +127,27 @@ class SkillLibrary:
     # -- writes ------------------------------------------------------------
 
     def add_item(self, name: str, repo: str, stars: str, function: str, dev_note: str) -> dict:
-        name = (name or "").strip()
-        if not name:
+        values = {
+            "name": name,
+            "repo": repo,
+            "stars": stars,
+            "function": function,
+            "dev_note": dev_note,
+        }
+        clean = {
+            key: _validate_field(key, "" if value is None else value).strip()
+            for key, value in values.items()
+        }
+        if not clean["name"]:
             raise ApiError(400, "name é obrigatório", code="invalid_name")
         now = _now()
         item = {
             "id": uuid.uuid4().hex,
-            "name": name,
-            "repo": (repo or "").strip(),
-            "stars": (stars or "").strip(),
-            "function": (function or "").strip(),
-            "dev_note": (dev_note or "").strip(),
+            "name": clean["name"],
+            "repo": clean["repo"],
+            "stars": clean["stars"],
+            "function": clean["function"],
+            "dev_note": clean["dev_note"],
             "status": "candidata",
             "personal_note": "",
             "decided_at": None,
@@ -126,11 +160,16 @@ class SkillLibrary:
         return item
 
     def edit_item(self, item_id: str, **fields) -> dict:
+        # Validate everything before mutating anything: a rejected field must
+        # not leave the item half-updated.
+        clean = {
+            key: _validate_field(key, value)
+            for key, value in fields.items()
+            if key in EDITABLE_FIELDS and value is not None
+        }
         items = self._read()
         item = self._find(items, item_id)
-        for key, value in fields.items():
-            if key in EDITABLE_FIELDS and value is not None:
-                item[key] = value
+        item.update(clean)
         item["updated_at"] = _now()
         self._write(items)
         return item
@@ -153,9 +192,10 @@ class SkillLibrary:
         return item
 
     def set_note(self, item_id: str, personal_note: str) -> dict:
+        note = _validate_field("personal_note", "" if personal_note is None else personal_note)
         items = self._read()
         item = self._find(items, item_id)
-        item["personal_note"] = personal_note or ""
+        item["personal_note"] = note
         item["updated_at"] = _now()
         self._write(items)
         return item

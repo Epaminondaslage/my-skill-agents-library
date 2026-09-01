@@ -112,6 +112,59 @@ class TestQueueRegen(unittest.TestCase):
             self.assertTrue(lib.request_path.exists())
 
 
+class TestFieldValidation(unittest.TestCase):
+    def test_edit_rejects_non_string_value(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            lib = make_lib(tmp)
+            item = lib.add_item(name="foo", repo="o/f", stars="1K", function="x", dev_note="1/10")
+            for bad in ({"a": 1}, ["x"], 7, True):
+                with self.subTest(value=bad):
+                    with self.assertRaises(api.ApiError) as ctx:
+                        lib.edit_item(item["id"], name=bad)
+                    self.assertEqual(ctx.exception.payload["code"], "invalid_field")
+            # rejected before any mutation reached items.json
+            self.assertEqual(lib.list_items()[0]["name"], "foo")
+
+    def test_edit_rejects_over_length_short_field(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            lib = make_lib(tmp)
+            item = lib.add_item(name="foo", repo="o/f", stars="1K", function="x", dev_note="1/10")
+            with self.assertRaises(api.ApiError) as ctx:
+                lib.edit_item(item["id"], repo="x" * (api.MAX_SHORT_FIELD + 1))
+            self.assertEqual(ctx.exception.payload["code"], "invalid_field")
+
+    def test_edit_accepts_field_at_the_limit(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            lib = make_lib(tmp)
+            item = lib.add_item(name="foo", repo="o/f", stars="1K", function="x", dev_note="1/10")
+            value = "x" * api.MAX_LONG_FIELD
+            updated = lib.edit_item(item["id"], function=value)
+            self.assertEqual(updated["function"], value)
+
+    def test_add_rejects_non_string_value(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            lib = make_lib(tmp)
+            with self.assertRaises(api.ApiError) as ctx:
+                lib.add_item(name="foo", repo={"o": "f"}, stars="", function="", dev_note="")
+            self.assertEqual(ctx.exception.payload["code"], "invalid_field")
+
+    def test_set_note_rejects_non_string(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            lib = make_lib(tmp)
+            item = lib.add_item(name="foo", repo="o/f", stars="1K", function="x", dev_note="1/10")
+            with self.assertRaises(api.ApiError) as ctx:
+                lib.set_note(item["id"], {"nested": True})
+            self.assertEqual(ctx.exception.payload["code"], "invalid_field")
+
+    def test_set_note_rejects_over_length(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            lib = make_lib(tmp)
+            item = lib.add_item(name="foo", repo="o/f", stars="1K", function="x", dev_note="1/10")
+            with self.assertRaises(api.ApiError) as ctx:
+                lib.set_note(item["id"], "n" * (api.MAX_LONG_FIELD + 1))
+            self.assertEqual(ctx.exception.payload["code"], "invalid_field")
+
+
 class TestCheckPassword(unittest.TestCase):
     def test_returns_false_when_auth_file_missing(self):
         with tempfile.TemporaryDirectory() as tmp:
