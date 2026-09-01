@@ -1,3 +1,5 @@
+import contextlib
+import io
 import json
 import tempfile
 import unittest
@@ -53,6 +55,22 @@ class TestBuildSite(unittest.TestCase):
             self.assertTrue((out_dir / "index.html").exists())
             self.assertTrue((out_dir / "app.js").exists())
             self.assertTrue((out_dir / "styles.css").exists())
+
+    def test_missing_items_json_builds_an_empty_site(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            items_path = Path(tmp) / "items.json"  # deliberately never created
+            out_dir = Path(tmp) / "site"
+
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr):
+                generator.build_site(items_path, out_dir)
+
+            self.assertIn("warning", stderr.getvalue())
+            self.assertTrue((out_dir / "index.html").exists())
+            self.assertIn(
+                '<script id="items-data" type="application/json">[]</script>',
+                (out_dir / "index.html").read_text(encoding="utf-8"),
+            )
 
     def test_raises_on_corrupt_items_json(self):
         with tempfile.TemporaryDirectory() as tmp:

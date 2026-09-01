@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 from pathlib import Path
 
 HOME = Path(os.environ.get("HOME", "")).expanduser()
@@ -44,57 +45,191 @@ def render_index_html(items: list[dict]) -> str:
 
 
 def render_app_js() -> str:
+    # Every node is built with createElement/textContent — never innerHTML —
+    # so item text can never be interpreted as markup.
     return """\
 const API = "/skill-library/api";
 const STATUSES = ["candidata", "aprovada", "rejeitada"];
+const EDITABLE = ["name", "repo", "stars", "function", "dev_note"];
+
+// Session-only: the password lives in this variable and nowhere else. It is
+// never written to localStorage/sessionStorage, so closing the tab forgets it.
+let password = "";
+let items = [];
+let filterStatus = null;
 
 function loadItems() {
   const raw = document.getElementById("items-data").textContent;
   return JSON.parse(raw);
 }
 
+function showError(el, message) {
+  if (el) el.textContent = message || "";
+}
+
+// Resolves with the parsed payload, or rejects with an Error carrying the
+// backend's message so callers can surface it. Write actions always carry the
+// password; the backend is the only thing that decides whether it is valid.
 function call(action, body) {
+  const payload = { action: action };
+  Object.keys(body || {}).forEach((k) => {
+    payload[k] = body[k];
+  });
+  if (action !== "list") payload.password = password;
   return fetch(API, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action, ...body }),
-  }).then((r) => r.json());
+    body: JSON.stringify(payload),
+  }).then((r) =>
+    r.json().then((data) => {
+      if (!r.ok || (data && data.error)) {
+        const err = new Error((data && data.error) || "erro " + r.status);
+        err.code = data && data.code;
+        err.status = r.status;
+        throw err;
+      }
+      return data;
+    })
+  );
 }
 
-function render(items, filterStatus) {
+function describe(err) {
+  if (err && err.status === 401) return "senha inválida — digite a senha novamente acima";
+  return (err && err.message) || "falha na comunicação com o servidor";
+}
+
+function renderAuth() {
+  const box = document.createElement("div");
+  box.className = "auth";
+
+  const input = document.createElement("input");
+  input.type = "password";
+  input.placeholder = "senha de escrita";
+  input.value = password;
+  box.appendChild(input);
+
+  const btn = document.createElement("button");
+  btn.textContent = "entrar";
+  box.appendChild(btn);
+
+  const err = document.createElement("div");
+  err.className = "error";
+  err.id = "auth-error";
+  box.appendChild(err);
+
+  const apply = () => {
+    password = input.value;
+    showError(err, password ? "" : "informe a senha antes de editar");
+  };
+  btn.onclick = apply;
+  input.onkeydown = (e) => {
+    if (e.key === "Enter") apply();
+  };
+  return box;
+}
+
+function reload() {
+  window.location.reload();
+}
+
+// A 401 belongs next to the password box, wherever it was triggered from.
+function handleError(err, localErrEl) {
+  if (err && err.status === 401) {
+    showError(document.getElementById("auth-error"), describe(err));
+  }
+  showError(localErrEl, describe(err));
+}
+
+function renderAddForm() {
+  const form = document.createElement("form");
+  form.className = "add-form";
+
+  const heading = document.createElement("h2");
+  heading.textContent = "adicionar item";
+  form.appendChild(heading);
+
+  const inputs = {};
+  EDITABLE.forEach((field) => {
+    const label = document.createElement("label");
+    label.textContent = field;
+    const input = document.createElement("input");
+    input.type = "text";
+    input.name = field;
+    label.appendChild(input);
+    form.appendChild(label);
+    inputs[field] = input;
+  });
+
+  const err = document.createElement("div");
+  err.className = "error";
+  form.appendChild(err);
+
+  const submit = document.createElement("button");
+  submit.type = "submit";
+  submit.textContent = "adicionar";
+  form.appendChild(submit);
+
+  form.onsubmit = (e) => {
+    e.preventDefault();
+    showError(err, "");
+    const body = {};
+    EDITABLE.forEach((f) => {
+      body[f] = inputs[f].value;
+    });
+    call("add", body).then(reload, (ex) => handleError(ex, err));
+  };
+  return form;
+}
+
+function render() {
   const app = document.getElementById("app");
-  app.innerHTML = "";
+  while (app.firstChild) app.removeChild(app.firstChild);
+
+  app.appendChild(renderAuth());
 
   const filters = document.createElement("div");
   filters.className = "filters";
-  ["todas", ...STATUSES].forEach((s) => {
+  ["todas"].concat(STATUSES).forEach((s) => {
     const btn = document.createElement("button");
     btn.textContent = s;
-    btn.className = s === filterStatus ? "active" : "";
-    btn.onclick = () => render(items, s === "todas" ? null : s);
+    const active = s === "todas" ? filterStatus === null : s === filterStatus;
+    btn.className = active ? "active" : "";
+    btn.onclick = () => {
+      filterStatus = s === "todas" ? null : s;
+      render();
+    };
     filters.appendChild(btn);
   });
   app.appendChild(filters);
+
+  app.appendChild(renderAddForm());
 
   const list = document.createElement("div");
   list.className = "list";
   items
     .filter((i) => !filterStatus || i.status === filterStatus)
-    .forEach((item) => list.appendChild(renderItem(item, items)));
+    .forEach((item) => list.appendChild(renderItem(item)));
   app.appendChild(list);
 }
 
-function renderItem(item, items) {
+function renderItem(item) {
   const card = document.createElement("div");
   card.className = "card status-" + item.status;
 
-  const title = document.createElement("h3");
-  title.textContent = item.name + " — " + item.repo;
-  card.appendChild(title);
+  const err = document.createElement("div");
+  err.className = "error";
 
-  const fn = document.createElement("p");
-  fn.textContent = item.function;
-  card.appendChild(fn);
+  const fields = {};
+  EDITABLE.forEach((field) => {
+    const label = document.createElement("label");
+    label.textContent = field;
+    const input = document.createElement("input");
+    input.type = "text";
+    input.value = item[field] || "";
+    label.appendChild(input);
+    card.appendChild(label);
+    fields[field] = input;
+  });
 
   const select = document.createElement("select");
   STATUSES.forEach((s) => {
@@ -104,23 +239,59 @@ function renderItem(item, items) {
     opt.selected = s === item.status;
     select.appendChild(opt);
   });
-  select.onchange = () =>
-    call("set_status", { id: item.id, status: select.value }).then(() =>
-      window.location.reload()
+  select.onchange = () => {
+    showError(err, "");
+    call("set_status", { id: item.id, status: select.value }).then(reload, (ex) =>
+      handleError(ex, err)
     );
+  };
   card.appendChild(select);
 
   const note = document.createElement("textarea");
   note.placeholder = "nota pessoal";
   note.value = item.personal_note || "";
-  note.onblur = () => call("set_note", { id: item.id, personal_note: note.value });
+  note.onblur = () => {
+    if (note.value === (item.personal_note || "")) return;
+    showError(err, "");
+    call("set_note", { id: item.id, personal_note: note.value }).then((updated) => {
+      item.personal_note = updated.personal_note;
+    }, (ex) => handleError(ex, err));
+  };
   card.appendChild(note);
 
+  const actions = document.createElement("div");
+  actions.className = "actions";
+
+  const save = document.createElement("button");
+  save.textContent = "salvar";
+  save.onclick = () => {
+    showError(err, "");
+    const body = { id: item.id };
+    EDITABLE.forEach((f) => {
+      body[f] = fields[f].value;
+    });
+    call("edit", body).then(reload, (ex) => handleError(ex, err));
+  };
+  actions.appendChild(save);
+
+  const del = document.createElement("button");
+  del.className = "danger";
+  del.textContent = "excluir";
+  del.onclick = () => {
+    if (!window.confirm("excluir \\"" + item.name + "\\"?")) return;
+    showError(err, "");
+    call("delete", { id: item.id }).then(reload, (ex) => handleError(ex, err));
+  };
+  actions.appendChild(del);
+
+  card.appendChild(actions);
+  card.appendChild(err);
   return card;
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  render(loadItems(), null);
+  items = loadItems();
+  render();
 });
 """
 
@@ -134,11 +305,31 @@ body { font-family: system-ui, sans-serif; margin: 0; padding: 1rem; }
 .list { display: grid; gap: 1rem; margin-top: 1rem; }
 .card { border: 1px solid #8888; border-radius: 8px; padding: .75rem; }
 .card textarea { width: 100%; min-height: 3rem; margin-top: .5rem; }
+.auth { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin-bottom: 1rem; }
+.add-form { border: 1px dashed #8888; border-radius: 8px; padding: .75rem; margin-top: 1rem; }
+.add-form h2 { font-size: 1rem; margin: 0 0 .5rem; }
+label { display: block; margin-bottom: .4rem; font-size: .8rem; }
+label input { display: block; width: 100%; }
+.actions { display: flex; gap: .5rem; margin-top: .5rem; }
+.actions .danger { color: #b00; }
+.error { color: #b00; font-size: .85rem; min-height: 1rem; }
 """
 
 
 def build_site(items_path: Path, out_dir: Path = OUT_DIR) -> None:
-    items = json.loads(items_path.read_text(encoding="utf-8"))
+    # A missing items.json is the normal first-run state (no catalog markdown
+    # to seed from yet): start empty and warn. A *corrupt* items.json is a
+    # different matter — that still raises, so a parse error is never mistaken
+    # for "the library is empty" and published as such.
+    if items_path.exists():
+        items = json.loads(items_path.read_text(encoding="utf-8"))
+    else:
+        print(
+            f"warning: {items_path} not found — generating an empty site. "
+            "Seed it from Catalogo-de-Agent-Skills.md, or add items from the page.",
+            file=sys.stderr,
+        )
+        items = []
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "index.html").write_text(render_index_html(items), encoding="utf-8")
     (out_dir / "app.js").write_text(render_app_js(), encoding="utf-8")
