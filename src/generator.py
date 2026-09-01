@@ -52,9 +52,6 @@ const API = "/skill-library/api";
 const STATUSES = ["candidata", "aprovada", "rejeitada"];
 const EDITABLE = ["name", "repo", "stars", "function", "dev_note"];
 
-// Session-only: the password lives in this variable and nowhere else. It is
-// never written to localStorage/sessionStorage, so closing the tab forgets it.
-let password = "";
 let items = [];
 let filterStatus = null;
 
@@ -68,14 +65,12 @@ function showError(el, message) {
 }
 
 // Resolves with the parsed payload, or rejects with an Error carrying the
-// backend's message so callers can surface it. Write actions always carry the
-// password; the backend is the only thing that decides whether it is valid.
+// backend's message so callers can surface it.
 function call(action, body) {
   const payload = { action: action };
   Object.keys(body || {}).forEach((k) => {
     payload[k] = body[k];
   });
-  if (action !== "list") payload.password = password;
   return fetch(API, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -94,49 +89,14 @@ function call(action, body) {
 }
 
 function describe(err) {
-  if (err && err.status === 401) return "senha inválida — digite a senha novamente acima";
   return (err && err.message) || "falha na comunicação com o servidor";
-}
-
-function renderAuth() {
-  const box = document.createElement("div");
-  box.className = "auth";
-
-  const input = document.createElement("input");
-  input.type = "password";
-  input.placeholder = "senha de escrita";
-  input.value = password;
-  box.appendChild(input);
-
-  const btn = document.createElement("button");
-  btn.textContent = "entrar";
-  box.appendChild(btn);
-
-  const err = document.createElement("div");
-  err.className = "error";
-  err.id = "auth-error";
-  box.appendChild(err);
-
-  const apply = () => {
-    password = input.value;
-    showError(err, password ? "" : "informe a senha antes de editar");
-  };
-  btn.onclick = apply;
-  input.onkeydown = (e) => {
-    if (e.key === "Enter") apply();
-  };
-  return box;
 }
 
 function reload() {
   window.location.reload();
 }
 
-// A 401 belongs next to the password box, wherever it was triggered from.
 function handleError(err, localErrEl) {
-  if (err && err.status === 401) {
-    showError(document.getElementById("auth-error"), describe(err));
-  }
   showError(localErrEl, describe(err));
 }
 
@@ -185,7 +145,6 @@ function render() {
   const app = document.getElementById("app");
   while (app.firstChild) app.removeChild(app.firstChild);
 
-  app.appendChild(renderAuth());
 
   const filters = document.createElement("div");
   filters.className = "filters";
@@ -305,7 +264,6 @@ body { font-family: system-ui, sans-serif; margin: 0; padding: 1rem; }
 .list { display: grid; gap: 1rem; margin-top: 1rem; }
 .card { border: 1px solid #8888; border-radius: 8px; padding: .75rem; }
 .card textarea { width: 100%; min-height: 3rem; margin-top: .5rem; }
-.auth { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin-bottom: 1rem; }
 .add-form { border: 1px dashed #8888; border-radius: 8px; padding: .75rem; margin-top: 1rem; }
 .add-form h2 { font-size: 1rem; margin: 0 0 .5rem; }
 label { display: block; margin-bottom: .4rem; font-size: .8rem; }

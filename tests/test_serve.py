@@ -1,13 +1,11 @@
-"""Tests for serve.py — the auth gate is the whole security boundary.
+"""Tests for serve.py — request routing and error shapes.
 
 Each test drives a real serve.py server over a real Unix socket in a temp
 directory, speaking HTTP over it by hand (http.client has no Unix transport).
 """
 
-import hashlib
 import http.client
 import json
-import secrets
 import socket
 import tempfile
 import threading
@@ -18,14 +16,6 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 import api  # noqa: E402
 import serve  # noqa: E402
-
-PASSWORD = "correct horse battery"
-
-
-def write_auth_hash(path: Path, plain: str) -> None:
-    salt = secrets.token_bytes(16)
-    key = hashlib.scrypt(plain.encode(), salt=salt, n=2**14, r=8, p=1, dklen=32)
-    path.write_text(f"scrypt$16384$8$1${salt.hex()}${key.hex()}", encoding="utf-8")
 
 
 class UnixHTTPConnection(http.client.HTTPConnection):
@@ -47,14 +37,6 @@ class ServeTestCase(unittest.TestCase):
 
         self.items_path = tmp / "items.json"
         self.items_path.write_text("[]", encoding="utf-8")
-        self.auth_path = tmp / "auth.hash"
-        write_auth_hash(self.auth_path, PASSWORD)
-
-        # Point both the library and the auth check at the temp state.
-        self._orig_auth = api.HARNESS_AUTH_FILE
-        api.HARNESS_AUTH_FILE = self.auth_path
-        self._orig_default = api.check_password.__defaults__
-        api.check_password.__defaults__ = (self.auth_path,)
 
         self._orig_lib = serve.Handler.lib
         serve.Handler.lib = api.SkillLibrary(
@@ -72,8 +54,6 @@ class ServeTestCase(unittest.TestCase):
         self.server.server_close()
         self.thread.join(timeout=5)
         serve.Handler.lib = self._orig_lib
-        api.HARNESS_AUTH_FILE = self._orig_auth
-        api.check_password.__defaults__ = self._orig_default
         self.tmp.cleanup()
 
     def post(self, payload):
@@ -97,47 +77,16 @@ class ServeTestCase(unittest.TestCase):
         return item["id"]
 
 
-class TestReadsAreOpen(ServeTestCase):
-    def test_list_succeeds_without_password(self):
+class TestReadsAndWrites(ServeTestCase):
+    def test_list_succeeds(self):
         status, body = self.post({"action": "list"})
         self.assertEqual(status, 200)
         self.assertEqual(body["items"], [])
 
-
-class TestAuthGate(ServeTestCase):
-    def write_payloads(self):
-        item_id = self.seed_one()
-        return [
-            {"action": "add", "name": "bar"},
-            {"action": "edit", "id": item_id, "name": "bar"},
-            {"action": "delete", "id": item_id},
-            {"action": "set_status", "id": item_id, "status": "aprovada"},
-            {"action": "set_note", "id": item_id, "personal_note": "nota"},
-        ]
-
-    def test_write_actions_401_without_password(self):
-        for payload in self.write_payloads():
-            with self.subTest(action=payload["action"]):
-                status, body = self.post(payload)
-                self.assertEqual(status, 401)
-                self.assertEqual(body["code"], "bad_password")
-
-    def test_write_actions_401_with_wrong_password(self):
-        for payload in self.write_payloads():
-            with self.subTest(action=payload["action"]):
-                status, body = self.post({**payload, "password": "nope"})
-                self.assertEqual(status, 401)
-                self.assertEqual(body["code"], "bad_password")
-
-    def test_nothing_is_written_when_auth_fails(self):
-        self.post({"action": "add", "name": "sneaky"})
-        self.assertEqual(json.loads(self.items_path.read_text(encoding="utf-8")), [])
-
-    def test_correct_password_allows_a_write(self):
+    def test_add_succeeds(self):
         status, body = self.post(
             {
                 "action": "add",
-                "password": PASSWORD,
                 "name": "grill-me",
                 "repo": "o/g",
                 "stars": "1K",
@@ -150,18 +99,24 @@ class TestAuthGate(ServeTestCase):
         self.assertEqual(body["status"], "candidata")
         self.assertEqual(len(json.loads(self.items_path.read_text(encoding="utf-8"))), 1)
 
-    def test_correct_password_allows_set_status(self):
+    def test_set_status_succeeds(self):
         item_id = self.seed_one()
         status, body = self.post(
-            {"action": "set_status", "id": item_id, "status": "aprovada", "password": PASSWORD}
+            {"action": "set_status", "id": item_id, "status": "aprovada"}
         )
         self.assertEqual(status, 200)
         self.assertEqual(body["status"], "aprovada")
 
+    def test_delete_succeeds(self):
+        item_id = self.seed_one()
+        status, body = self.post({"action": "delete", "id": item_id})
+        self.assertEqual(status, 200)
+        self.assertEqual(json.loads(self.items_path.read_text(encoding="utf-8")), [])
+
 
 class TestErrors(ServeTestCase):
     def test_unknown_action_is_400(self):
-        status, body = self.post({"action": "obliterate", "password": PASSWORD})
+        status, body = self.post({"action": "obliterate"})
         self.assertEqual(status, 400)
         self.assertEqual(body["code"], "unknown_action")
 
@@ -173,7 +128,7 @@ class TestErrors(ServeTestCase):
     def test_non_string_field_is_rejected(self):
         item_id = self.seed_one()
         status, body = self.post(
-            {"action": "edit", "id": item_id, "name": {"evil": 1}, "password": PASSWORD}
+            {"action": "edit", "id": item_id, "name": {"evil": 1}}
         )
         self.assertEqual(status, 400)
         self.assertEqual(body["code"], "invalid_field")

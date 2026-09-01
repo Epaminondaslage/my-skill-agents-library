@@ -13,11 +13,9 @@ import socketserver
 from http.server import BaseHTTPRequestHandler
 from pathlib import Path
 
-from api import ApiError, SkillLibrary, check_password
+from api import ApiError, SkillLibrary
 
 SOCKET_PATH = os.environ.get("SKILL_LIBRARY_SOCKET", "/run/skill-agents-library/sock")
-
-WRITE_ACTIONS = {"add", "edit", "delete", "set_status", "set_note"}
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -37,9 +35,6 @@ class Handler(BaseHTTPRequestHandler):
             raw = self.rfile.read(length) if length else b"{}"
             req = json.loads(raw or b"{}")
             action = req.get("action")
-
-            if action in WRITE_ACTIONS and not check_password(req.get("password", "")):
-                raise ApiError(401, "senha inválida", code="bad_password")
 
             if action == "list":
                 result = self.lib.list_items()

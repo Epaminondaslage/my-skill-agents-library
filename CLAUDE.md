@@ -39,8 +39,8 @@ State (both modes): `~/.claude/.skill-library/` (items.json, audit log,
 status, regen request) is the sole source of truth, mutated only through
 `src/api.py`.
 
-Auth is shared with my-Harness-Library: this project reads (never writes)
-`~/.claude/.inventory/auth.hash`.
+No auth: writes are open on the socket (nginx location + container/systemd
+boundary is the only access control).
 
 ## Working rules
 

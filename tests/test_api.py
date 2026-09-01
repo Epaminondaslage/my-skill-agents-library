@@ -165,26 +165,5 @@ class TestFieldValidation(unittest.TestCase):
             self.assertEqual(ctx.exception.payload["code"], "invalid_field")
 
 
-class TestCheckPassword(unittest.TestCase):
-    def test_returns_false_when_auth_file_missing(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            missing = Path(tmp) / "does-not-exist.hash"
-            self.assertFalse(api.check_password("anything", auth_path=missing))
-
-    def test_matches_hash_written_by_harness_scheme(self):
-        import hashlib
-        import secrets
-
-        with tempfile.TemporaryDirectory() as tmp:
-            auth_path = Path(tmp) / "auth.hash"
-            salt = secrets.token_bytes(16)
-            key = hashlib.scrypt(b"correct horse", salt=salt, n=2**14, r=8, p=1, dklen=32)
-            auth_path.write_text(
-                f"scrypt$16384$8$1${salt.hex()}${key.hex()}", encoding="utf-8"
-            )
-            self.assertTrue(api.check_password("correct horse", auth_path=auth_path))
-            self.assertFalse(api.check_password("wrong", auth_path=auth_path))
-
-
 if __name__ == "__main__":
     unittest.main()

@@ -5,16 +5,10 @@
 # Standard library only. This module owns the business logic (SkillLibrary);
 # the Unix-socket/HTTP wiring lives in serve.py (Task 5) so the logic here
 # stays testable without a running server.
-#
-# Auth reuses my-Harness-Library's password hash at
-# ~/.claude/.inventory/auth.hash — read-only, never written or duplicated
-# here.
 # =============================================================================
 
 from __future__ import annotations
 
-import hashlib
-import hmac
 import json
 import os
 import uuid
@@ -28,7 +22,6 @@ CLAUDE = HOME / ".claude"
 STATE = CLAUDE / ".skill-library"
 ITEMS_FILE = STATE / "items.json"
 REQUEST_FILE = STATE / "regen.request"
-HARNESS_AUTH_FILE = CLAUDE / ".inventory" / "auth.hash"
 
 EDITABLE_FIELDS = ("name", "repo", "stars", "function", "dev_note")
 
@@ -70,24 +63,6 @@ def _validate_field(key: str, value) -> str:
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
-
-
-def check_password(plain: str, auth_path: Path = HARNESS_AUTH_FILE) -> bool:
-    """Verify plain against the harness's scrypt$n$r$p$salt$key hash file."""
-    if not auth_path.exists():
-        return False
-    try:
-        scheme, n, r, p, salt_hex, key_hex = auth_path.read_text(encoding="utf-8").strip().split("$")
-        if scheme != "scrypt":
-            return False
-        salt = bytes.fromhex(salt_hex)
-        expected = bytes.fromhex(key_hex)
-        candidate = hashlib.scrypt(
-            plain.encode(), salt=salt, n=int(n), r=int(r), p=int(p), dklen=len(expected)
-        )
-        return hmac.compare_digest(candidate, expected)
-    except (ValueError, OSError):
-        return False
 
 
 class SkillLibrary:
