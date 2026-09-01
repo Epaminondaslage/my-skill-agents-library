@@ -64,6 +64,7 @@ const EDITABLE = ["name", "repo", "stars", "function", "dev_note"];
 
 let items = [];
 let filterStatus = null;
+let expanded = new Set(); // ids currently showing the edit form
 
 // ---- tema: claro/escuro/auto, persistido em localStorage -----------------
 function currentTheme() {
@@ -142,8 +143,14 @@ function describe(err) {
   return (err && err.message) || "falha na comunicação com o servidor";
 }
 
+// Refreshes state from the backend and re-renders in place — the served
+// index.html is a static snapshot regenerated only on the cron/regen loop,
+// so a full page reload would show stale data until that runs.
 function reload() {
-  window.location.reload();
+  return call("list", {}).then((data) => {
+    items = data.items || [];
+    render();
+  });
 }
 
 function handleError(err, localErrEl) {
@@ -281,19 +288,8 @@ function renderItem(item) {
   const err = document.createElement("div");
   err.className = "error";
 
-  const fields = {};
-  EDITABLE.forEach((field) => {
-    const label = document.createElement("label");
-    label.textContent = field;
-    const input = document.createElement("input");
-    input.type = "text";
-    input.value = item[field] || "";
-    label.appendChild(input);
-    card.appendChild(label);
-    fields[field] = input;
-  });
-
   const select = document.createElement("select");
+  select.className = "status-select";
   STATUSES.forEach((s) => {
     const opt = document.createElement("option");
     opt.value = s;
@@ -307,6 +303,62 @@ function renderItem(item) {
       handleError(ex, err)
     );
   };
+
+  if (!expanded.has(item.id)) {
+    // ---- compact view ----
+    const desc = document.createElement("div");
+    desc.className = "card-desc";
+    desc.textContent = item.function || "";
+    card.appendChild(desc);
+
+    const meta = document.createElement("div");
+    meta.className = "card-meta";
+    meta.textContent = [item.repo, item.stars].filter(Boolean).join(" · ");
+    card.appendChild(meta);
+
+    const actions = document.createElement("div");
+    actions.className = "actions";
+    actions.appendChild(select);
+
+    const edit = document.createElement("button");
+    edit.type = "button";
+    edit.className = "btn btn-sm";
+    edit.textContent = "editar";
+    edit.onclick = () => {
+      expanded.add(item.id);
+      render();
+    };
+    actions.appendChild(edit);
+
+    const del = document.createElement("button");
+    del.type = "button";
+    del.className = "btn btn-sm danger";
+    del.textContent = "excluir";
+    del.onclick = () => {
+      if (!window.confirm("excluir \\"" + item.name + "\\"?")) return;
+      showError(err, "");
+      call("delete", { id: item.id }).then(reload, (ex) => handleError(ex, err));
+    };
+    actions.appendChild(del);
+
+    card.appendChild(actions);
+    card.appendChild(err);
+    return card;
+  }
+
+  // ---- edit view ----
+  const fields = {};
+  EDITABLE.forEach((field) => {
+    const label = document.createElement("label");
+    label.textContent = field;
+    const input = document.createElement("input");
+    input.type = "text";
+    input.value = item[field] || "";
+    label.appendChild(input);
+    card.appendChild(label);
+    fields[field] = input;
+  });
+
   card.appendChild(select);
 
   const note = document.createElement("textarea");
@@ -326,7 +378,7 @@ function renderItem(item) {
 
   const save = document.createElement("button");
   save.type = "button";
-  save.className = "btn btn-sm";
+  save.className = "btn btn-sm btn-primary";
   save.textContent = "salvar";
   save.onclick = () => {
     showError(err, "");
@@ -337,6 +389,16 @@ function renderItem(item) {
     call("edit", body).then(reload, (ex) => handleError(ex, err));
   };
   actions.appendChild(save);
+
+  const close = document.createElement("button");
+  close.type = "button";
+  close.className = "btn btn-sm";
+  close.textContent = "fechar";
+  close.onclick = () => {
+    expanded.delete(item.id);
+    render();
+  };
+  actions.appendChild(close);
 
   const del = document.createElement("button");
   del.type = "button";
@@ -494,11 +556,11 @@ label input, label select {
 }
 
 /* ---- Grade de cards ---- */
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; align-items: start; }
 .card {
   background: var(--surface);
   border-radius: 8px;
-  padding: 1rem 1.1rem;
+  padding: .85rem 1rem;
   border-left: 4px solid var(--border);
   box-shadow: 0 1px 2px var(--shadow);
 }
@@ -506,8 +568,26 @@ label input, label select {
 .card.status-aprovada  { border-left-color: var(--c-aprovada-fg); }
 .card.status-rejeitada { border-left-color: var(--c-rejeitada-fg); }
 
-.card-head { display: flex; justify-content: space-between; align-items: center; gap: .5rem; margin-bottom: .6rem; }
-.card-name { font-weight: 600; color: var(--strong); word-break: break-word; }
+.card-head { display: flex; justify-content: space-between; align-items: center; gap: .5rem; margin-bottom: .4rem; }
+.card-name { font-weight: 600; font-size: .92rem; color: var(--strong); word-break: break-word; }
+.card-desc {
+  font-size: .82rem;
+  line-height: 1.4;
+  color: var(--body-txt);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.card-meta { margin-top: .35rem; font-size: .72rem; color: var(--muted-2); word-break: break-word; }
+.status-select {
+  padding: .3rem .45rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--fg);
+  font-size: .78rem;
+}
 
 .card textarea {
   width: 100%;
@@ -545,7 +625,7 @@ label input, label select {
 .btn.danger { color: var(--danger); }
 .btn.danger:hover { border-color: var(--danger); color: var(--danger); }
 
-.actions { display: flex; gap: .5rem; margin-top: .6rem; }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-top: .6rem; }
 .error { color: var(--danger); font-size: .8rem; min-height: 1rem; margin-top: .3rem; }
 .empty { text-align: center; color: var(--muted); padding: 2rem 0; grid-column: 1 / -1; }
 """
