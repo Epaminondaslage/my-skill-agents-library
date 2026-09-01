@@ -32,6 +32,7 @@ system, unrelated data.
 - [Uninstalling](#uninstalling)
 - [Troubleshooting](#troubleshooting)
 - [Project layout](#project-layout)
+- [Codebase map](#codebase-map)
 - [Notes for contributors](#notes-for-contributors)
 - [License](#license)
 
@@ -368,7 +369,9 @@ my-skill-agents-library/
 │   ├── entrypoint.sh                 container init: state dirs, backend, regen loop, nginx
 │   └── nginx.conf                    the container's whole nginx config
 ├── docs/
-│   └── nginx-snippet.conf            the location block install.sh injects
+│   ├── CODEBASE_MAP.md               architecture, module guide, data flow diagrams, gotchas
+│   ├── nginx-snippet.conf            the location block install.sh injects
+│   └── screenshot-{light,dark}.png
 ├── README.md
 ├── CLAUDE.md                         summary and working rules for Claude Code sessions
 └── src/
@@ -386,6 +389,20 @@ Nothing is generated at build time and no dependency is vendored. What you
 read is what runs.
 
 ---
+
+## Codebase map
+
+[docs/CODEBASE_MAP.md](docs/CODEBASE_MAP.md) is the developer-facing
+companion to this README: an architecture diagram of how the browser,
+nginx, the backend and the state directory fit together; a module guide
+for every file in `src/` (key exports, dependents, gotchas); sequence
+diagrams for a write's full lifecycle and for the `refresh_repo` GitHub
+call; the project's conventions; a list of gotchas already paid for
+(including a couple of real inconsistencies worth fixing); and a
+navigation guide — for a given change, which files to touch.
+
+Generated with [Cartographer](https://github.com/kingbootoshi/cartographer)
+and kept in the repository so it is versioned with the code.
 
 ## Notes for contributors
 

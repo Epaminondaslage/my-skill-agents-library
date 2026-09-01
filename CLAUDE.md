@@ -42,6 +42,9 @@ status, regen request) is the sole source of truth, mutated only through
 No auth: writes are open on the socket (nginx location + container/systemd
 boundary is the only access control).
 
+For detailed architecture, module guide, data flow diagrams and gotchas,
+see [docs/CODEBASE_MAP.md](docs/CODEBASE_MAP.md).
+
 ## Working rules
 
 - Keep it stdlib-only and offline-first.
