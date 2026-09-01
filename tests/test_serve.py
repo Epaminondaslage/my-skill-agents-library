@@ -133,5 +133,23 @@ class TestErrors(ServeTestCase):
         self.assertEqual(body["code"], "invalid_field")
 
 
+class TestRefreshRepo(ServeTestCase):
+    def test_refresh_repo_action_updates_item(self):
+        item_id = self.seed_one()
+
+        def fake_fetch(url):
+            return {"html_url": "https://github.com/o/f", "stargazers_count": 7}
+
+        orig = api.fetch_repo_info
+        api.fetch_repo_info = lambda repo, fetch_fn=None: {"url": "https://github.com/o/f", "stars": 7}
+        try:
+            status, body = self.post({"action": "refresh_repo", "id": item_id})
+        finally:
+            api.fetch_repo_info = orig
+        self.assertEqual(status, 200)
+        self.assertEqual(body["stars"], 7)
+        self.assertEqual(body["url"], "https://github.com/o/f")
+
+
 if __name__ == "__main__":
     unittest.main()

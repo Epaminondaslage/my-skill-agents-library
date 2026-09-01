@@ -55,6 +55,8 @@ class Handler(BaseHTTPRequestHandler):
                 result = self.lib.set_status(req.get("id"), req.get("status"))
             elif action == "set_note":
                 result = self.lib.set_note(req.get("id"), req.get("personal_note", ""))
+            elif action == "refresh_repo":
+                result = self.lib.refresh_repo(req.get("id"))
             else:
                 raise ApiError(400, f"ação desconhecida: {action}", code="unknown_action")
 
