@@ -33,6 +33,15 @@ def render_index_html(items: list[dict]) -> str:
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>My Skill-Agents Library</title>
+<!-- Aplica o tema salvo ANTES do CSS pintar, evitando flash de tema errado. -->
+<script>
+(function () {{
+  try {{
+    var t = localStorage.getItem("theme");
+    if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t);
+  }} catch (e) {{}}
+}})();
+</script>
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -50,10 +59,51 @@ def render_app_js() -> str:
     return """\
 const API = "/skill-library/api";
 const STATUSES = ["candidata", "aprovada", "rejeitada"];
+const STATUS_LABEL = { candidata: "candidata", aprovada: "aprovada", rejeitada: "rejeitada" };
 const EDITABLE = ["name", "repo", "stars", "function", "dev_note"];
 
 let items = [];
 let filterStatus = null;
+
+// ---- tema: claro/escuro/auto, persistido em localStorage -----------------
+function currentTheme() {
+  try {
+    return localStorage.getItem("theme");
+  } catch (e) {
+    return null;
+  }
+}
+
+function setTheme(theme) {
+  if (theme) {
+    document.documentElement.setAttribute("data-theme", theme);
+  } else {
+    document.documentElement.removeAttribute("data-theme");
+  }
+  try {
+    if (theme) localStorage.setItem("theme", theme);
+    else localStorage.removeItem("theme");
+  } catch (e) {}
+}
+
+function isDark() {
+  const explicit = currentTheme();
+  if (explicit) return explicit === "dark";
+  return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+}
+
+function renderThemeToggle() {
+  const btn = document.createElement("button");
+  btn.className = "theme-toggle";
+  btn.type = "button";
+  btn.title = "alternar tema";
+  btn.textContent = isDark() ? "☀" : "☾";
+  btn.onclick = () => {
+    setTheme(isDark() ? "light" : "dark");
+    render();
+  };
+  return btn;
+}
 
 function loadItems() {
   const raw = document.getElementById("items-data").textContent;
@@ -100,13 +150,55 @@ function handleError(err, localErrEl) {
   showError(localErrEl, describe(err));
 }
 
+function renderTopbar() {
+  const bar = document.createElement("div");
+  bar.className = "topbar";
+
+  const h1 = document.createElement("h1");
+  h1.textContent = "My Skill-Agents Library";
+  bar.appendChild(h1);
+
+  const right = document.createElement("div");
+  right.className = "topbar-right";
+  const count = document.createElement("span");
+  count.className = "topbar-info";
+  count.textContent = items.length + " item" + (items.length === 1 ? "" : "s");
+  right.appendChild(count);
+  right.appendChild(renderThemeToggle());
+  bar.appendChild(right);
+
+  return bar;
+}
+
+function renderFilters() {
+  const filters = document.createElement("div");
+  filters.className = "filters";
+  ["todas"].concat(STATUSES).forEach((s) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.textContent = s === "todas" ? "todas" : STATUS_LABEL[s];
+    const active = s === "todas" ? filterStatus === null : s === filterStatus;
+    btn.className = "btn btn-sm" + (active ? " btn-primary" : "");
+    btn.onclick = () => {
+      filterStatus = s === "todas" ? null : s;
+      render();
+    };
+    filters.appendChild(btn);
+  });
+  return filters;
+}
+
 function renderAddForm() {
   const form = document.createElement("form");
-  form.className = "add-form";
+  form.className = "add-form card";
 
   const heading = document.createElement("h2");
   heading.textContent = "adicionar item";
   form.appendChild(heading);
+
+  const grid = document.createElement("div");
+  grid.className = "add-form-grid";
+  form.appendChild(grid);
 
   const inputs = {};
   EDITABLE.forEach((field) => {
@@ -116,7 +208,7 @@ function renderAddForm() {
     input.type = "text";
     input.name = field;
     label.appendChild(input);
-    form.appendChild(label);
+    grid.appendChild(label);
     inputs[field] = input;
   });
 
@@ -126,6 +218,7 @@ function renderAddForm() {
 
   const submit = document.createElement("button");
   submit.type = "submit";
+  submit.className = "btn btn-primary";
   submit.textContent = "adicionar";
   form.appendChild(submit);
 
@@ -145,35 +238,45 @@ function render() {
   const app = document.getElementById("app");
   while (app.firstChild) app.removeChild(app.firstChild);
 
+  app.appendChild(renderTopbar());
 
-  const filters = document.createElement("div");
-  filters.className = "filters";
-  ["todas"].concat(STATUSES).forEach((s) => {
-    const btn = document.createElement("button");
-    btn.textContent = s;
-    const active = s === "todas" ? filterStatus === null : s === filterStatus;
-    btn.className = active ? "active" : "";
-    btn.onclick = () => {
-      filterStatus = s === "todas" ? null : s;
-      render();
-    };
-    filters.appendChild(btn);
-  });
-  app.appendChild(filters);
+  const container = document.createElement("div");
+  container.className = "container";
 
-  app.appendChild(renderAddForm());
+  container.appendChild(renderFilters());
+  container.appendChild(renderAddForm());
 
   const list = document.createElement("div");
-  list.className = "list";
-  items
-    .filter((i) => !filterStatus || i.status === filterStatus)
-    .forEach((item) => list.appendChild(renderItem(item)));
-  app.appendChild(list);
+  list.className = "grid";
+  const visible = items.filter((i) => !filterStatus || i.status === filterStatus);
+  if (visible.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.textContent = "nenhum item aqui";
+    list.appendChild(empty);
+  } else {
+    visible.forEach((item) => list.appendChild(renderItem(item)));
+  }
+  container.appendChild(list);
+
+  app.appendChild(container);
 }
 
 function renderItem(item) {
   const card = document.createElement("div");
   card.className = "card status-" + item.status;
+
+  const head = document.createElement("div");
+  head.className = "card-head";
+  const name = document.createElement("span");
+  name.className = "card-name";
+  name.textContent = item.name || "(sem nome)";
+  head.appendChild(name);
+  const badge = document.createElement("span");
+  badge.className = "badge badge-" + item.status;
+  badge.textContent = STATUS_LABEL[item.status] || item.status;
+  head.appendChild(badge);
+  card.appendChild(head);
 
   const err = document.createElement("div");
   err.className = "error";
@@ -194,7 +297,7 @@ function renderItem(item) {
   STATUSES.forEach((s) => {
     const opt = document.createElement("option");
     opt.value = s;
-    opt.textContent = s;
+    opt.textContent = STATUS_LABEL[s];
     opt.selected = s === item.status;
     select.appendChild(opt);
   });
@@ -222,6 +325,8 @@ function renderItem(item) {
   actions.className = "actions";
 
   const save = document.createElement("button");
+  save.type = "button";
+  save.className = "btn btn-sm";
   save.textContent = "salvar";
   save.onclick = () => {
     showError(err, "");
@@ -234,7 +339,8 @@ function renderItem(item) {
   actions.appendChild(save);
 
   const del = document.createElement("button");
-  del.className = "danger";
+  del.type = "button";
+  del.className = "btn btn-sm danger";
   del.textContent = "excluir";
   del.onclick = () => {
     if (!window.confirm("excluir \\"" + item.name + "\\"?")) return;
@@ -257,20 +363,191 @@ document.addEventListener("DOMContentLoaded", () => {
 
 def render_styles_css() -> str:
     return """\
-:root { color-scheme: light dark; }
-body { font-family: system-ui, sans-serif; margin: 0; padding: 1rem; }
-.filters button { margin-right: .5rem; }
-.filters button.active { font-weight: bold; }
-.list { display: grid; gap: 1rem; margin-top: 1rem; }
-.card { border: 1px solid #8888; border-radius: 8px; padding: .75rem; }
-.card textarea { width: 100%; min-height: 3rem; margin-top: .5rem; }
-.add-form { border: 1px dashed #8888; border-radius: 8px; padding: .75rem; margin-top: 1rem; }
-.add-form h2 { font-size: 1rem; margin: 0 0 .5rem; }
-label { display: block; margin-bottom: .4rem; font-size: .8rem; }
-label input { display: block; width: 100%; }
-.actions { display: flex; gap: .5rem; margin-top: .5rem; }
-.actions .danger { color: #b00; }
-.error { color: #b00; font-size: .85rem; min-height: 1rem; }
+/* =====================================================================
+   styles.css - My Skill-Agents Library
+   Padrao SPS Design System (TIPO 2), o mesmo do my-Harness-Library:
+   header branco 56px, fundo #f0f0f0, cards brancos, acento teal #0d9488.
+
+   Tema claro/escuro por tokens CSS. Tres estados:
+     :root                      -> paleta clara (padrao)
+     @media prefers-color-scheme -> escuro quando o SO pede e o usuario
+                                    nao escolheu (guardado por :not([data-theme="light"]))
+     :root[data-theme="dark"]   -> escolha explicita no botao do topo
+   Nenhuma cor pode existir SO dentro do media query: o toggle precisa
+   vencer nos dois sentidos.
+====================================================================== */
+
+:root {
+  --bg:          #f0f0f0;
+  --fg:          #1f2937;
+  --surface:     #ffffff;
+  --border:      #e5e7eb;
+  --muted:       #6b7280;
+  --muted-2:     #9ca3af;
+  --strong:      #111827;
+  --body-txt:    #374151;
+  --accent:      #0d9488;
+  --accent-soft: #ccfbf1;
+  --shadow:      rgba(0, 0, 0, .06);
+  --danger:      #b91c1c;
+  /* badges por status */
+  --c-candidata-bg: #fef3c7; --c-candidata-fg: #a16207;
+  --c-aprovada-bg:  #dcfce7; --c-aprovada-fg:  #15803d;
+  --c-rejeitada-bg: #fee2e2; --c-rejeitada-fg: #b91c1c;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:          #111827;
+    --fg:          #e5e7eb;
+    --surface:     #1f2937;
+    --border:      #374151;
+    --muted:       #9ca3af;
+    --muted-2:     #6b7280;
+    --strong:      #f9fafb;
+    --body-txt:    #d1d5db;
+    --accent:      #2dd4bf;
+    --accent-soft: #134e4a;
+    --shadow:      rgba(0, 0, 0, .4);
+    --danger:      #fca5a5;
+    --c-candidata-bg: #4a3410; --c-candidata-fg: #fcd34d;
+    --c-aprovada-bg:  #14532d; --c-aprovada-fg:  #86efac;
+    --c-rejeitada-bg: #5c1f1f; --c-rejeitada-fg: #fca5a5;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg:          #111827;
+  --fg:          #e5e7eb;
+  --surface:     #1f2937;
+  --border:      #374151;
+  --muted:       #9ca3af;
+  --muted-2:     #6b7280;
+  --strong:      #f9fafb;
+  --body-txt:    #d1d5db;
+  --accent:      #2dd4bf;
+  --accent-soft: #134e4a;
+  --shadow:      rgba(0, 0, 0, .4);
+  --danger:      #fca5a5;
+  --c-candidata-bg: #4a3410; --c-candidata-fg: #fcd34d;
+  --c-aprovada-bg:  #14532d; --c-aprovada-fg:  #86efac;
+  --c-rejeitada-bg: #5c1f1f; --c-rejeitada-fg: #fca5a5;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif; background: var(--bg); color: var(--fg); }
+
+/* ---- Header fixo de 56px ---- */
+.topbar {
+  height: 56px;
+  background: var(--surface);
+  border-bottom: 3px solid var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  padding: 0 1.25rem;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.topbar h1 { font-size: 1.05rem; margin: 0; color: var(--accent); }
+.topbar-right { display: flex; align-items: center; gap: .75rem; }
+.topbar-info { font-size: .78rem; color: var(--muted); }
+
+.theme-toggle {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 1rem;
+}
+.theme-toggle:hover { color: var(--accent); border-color: var(--accent); }
+
+.container { max-width: 1100px; margin: 0 auto; padding: 1.25rem 1rem 3rem; }
+
+/* ---- Filtros ---- */
+.filters { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1rem; }
+
+/* ---- Form de adicao ---- */
+.add-form { margin-bottom: 1.25rem; }
+.add-form h2 { font-size: 1rem; margin: 0 0 .7rem; color: var(--strong); }
+.add-form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: .7rem; margin-bottom: .7rem; }
+
+label { display: block; font-size: .78rem; color: var(--muted); margin-bottom: .6rem; }
+label input, label select {
+  display: block;
+  width: 100%;
+  margin-top: .25rem;
+  padding: .4rem .55rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--fg);
+  font-size: .85rem;
+}
+
+/* ---- Grade de cards ---- */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+.card {
+  background: var(--surface);
+  border-radius: 8px;
+  padding: 1rem 1.1rem;
+  border-left: 4px solid var(--border);
+  box-shadow: 0 1px 2px var(--shadow);
+}
+.card.status-candidata { border-left-color: var(--c-candidata-fg); }
+.card.status-aprovada  { border-left-color: var(--c-aprovada-fg); }
+.card.status-rejeitada { border-left-color: var(--c-rejeitada-fg); }
+
+.card-head { display: flex; justify-content: space-between; align-items: center; gap: .5rem; margin-bottom: .6rem; }
+.card-name { font-weight: 600; color: var(--strong); word-break: break-word; }
+
+.card textarea {
+  width: 100%;
+  min-height: 3rem;
+  margin-top: .3rem;
+  padding: .4rem .55rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--fg);
+  font-size: .82rem;
+  font-family: inherit;
+}
+
+/* ---- Badges de status ---- */
+.badge { flex-shrink: 0; font-size: .68rem; font-weight: 600; padding: .18rem .55rem; border-radius: 99px; }
+.badge-candidata { background: var(--c-candidata-bg); color: var(--c-candidata-fg); }
+.badge-aprovada  { background: var(--c-aprovada-bg);  color: var(--c-aprovada-fg); }
+.badge-rejeitada { background: var(--c-rejeitada-bg); color: var(--c-rejeitada-fg); }
+
+/* ---- Botoes ---- */
+.btn {
+  padding: .4rem .9rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--body-txt);
+  font-size: .82rem;
+  cursor: pointer;
+}
+.btn:hover { border-color: var(--accent); color: var(--accent); }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: var(--bg); font-weight: 500; }
+.btn-primary:hover { color: var(--bg); opacity: .9; }
+.btn-sm { padding: .3rem .7rem; font-size: .78rem; }
+.btn.danger { color: var(--danger); }
+.btn.danger:hover { border-color: var(--danger); color: var(--danger); }
+
+.actions { display: flex; gap: .5rem; margin-top: .6rem; }
+.error { color: var(--danger); font-size: .8rem; min-height: 1rem; margin-top: .3rem; }
+.empty { text-align: center; color: var(--muted); padding: 2rem 0; grid-column: 1 / -1; }
 """
 
 
