@@ -1,25 +1,84 @@
+# =============================================================================
+# skill-agents-library.service — backend of My Skill-Agents Library
+#
+# Template: install.sh substitutes @RUN_USER@ and @USER_HOME@ and installs the
+# result as /etc/systemd/system/skill-agents-library.service.
+#
+# All of the isolation lives here, in the kernel: a read-only filesystem with
+# one writable hole, no capabilities, no address family beyond AF_UNIX, and a
+# syscall filter that denies process creation outright.
+# =============================================================================
+
 [Unit]
 Description=My Skill-Agents Library backend
+Documentation=https://github.com/Epaminondaslage/my-skill-agents-library
 After=network.target
 
 [Service]
 Type=simple
 User=@RUN_USER@
-Group=@RUN_GROUP@
+# Hardcoded, never templated: systemd creates RuntimeDirectory owned by
+# User:Group, so this is what lets nginx (www-data on Debian/Ubuntu) reach the
+# socket at mode 0770. The process still runs with @RUN_USER@'s UID, which is
+# what grants access to ~/.claude.
+Group=www-data
+UMask=0007
+
 ExecStart=/usr/bin/python3 /opt/skill-agents-library/src/serve.py
 Environment=SKILL_LIBRARY_SOCKET=/run/skill-agents-library/sock
+Environment=PYTHONUNBUFFERED=1
 RuntimeDirectory=skill-agents-library
 RuntimeDirectoryMode=0770
+Restart=on-failure
+RestartSec=2
 
+# ---- Filesystem -----------------------------------------------------------
+# Read-only everything, then punch exactly one writable hole.
 ProtectSystem=strict
 ProtectHome=read-only
 ReadWritePaths=@USER_HOME@/.claude/.skill-library
-NoNewPrivileges=yes
 PrivateTmp=yes
-SystemCallFilter=@system-service
-SystemCallErrorNumber=EPERM
+PrivateDevices=yes
+# Nothing on this filesystem is executable except the interpreter itself and
+# the shared libraries it must mmap PROT_EXEC (libpython, lib-dynload .so).
+# /usr/bin is NOT wholesale-allowed: /bin/sh is under it, and stays noexec.
+NoExecPaths=/
+ExecPaths=/usr/bin/python3
+ExecPaths=/usr/lib
+ExecPaths=/lib
 
-Restart=on-failure
+# ---- Privilege ------------------------------------------------------------
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+RestrictSUIDSGID=yes
+LockPersonality=yes
+
+# ---- Kernel and namespaces ------------------------------------------------
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+ProtectProc=invisible
+RestrictNamespaces=yes
+RestrictRealtime=yes
+MemoryDenyWriteExecute=yes
+
+# ---- Syscalls and network -------------------------------------------------
+# @system-service minus the privileged/process-spawning families: this service
+# must never be able to exec anything, which is why regeneration is queued to
+# cron instead of being run in-process.
+SystemCallFilter=@system-service
+SystemCallFilter=~@privileged @resources @obsolete @mount @debug @swap
+SystemCallErrorNumber=EPERM
+SystemCallArchitectures=native
+RestrictAddressFamilies=AF_UNIX
+
+# ---- Resources ------------------------------------------------------------
+MemoryMax=128M
+TasksMax=16
 
 [Install]
 WantedBy=multi-user.target
