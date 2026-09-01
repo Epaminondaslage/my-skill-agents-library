@@ -41,8 +41,8 @@ KIND_RULES = (
 PURPOSE_RULES = (
     ("security",     r"secur|vulnerab|owasp|exploit|cve\b|secret|hardening|pentest"),
     ("spec-ops",     r"\bspec|plan(o|ning)?\b|roadmap|workflow|task|backlog|scaffold|tdd|brainstorm"),
-    ("devops",       r"deploy|infra|terraform|docker|kubernet|ansible|ci[/-]?cd|pipeline|tunnel|cron|monitor|observab|cost|\bgit\b|worktree|\bcommit|branch|merge|pull request|\bpr\b|rebase"),
     ("quality",      r"review|audit|lint|refactor|simplif|moderniz|coverage|\btest|verific|valida|dead code|anti-pattern|legacy"),
+    ("devops",       r"deploy|infra|terraform|docker|kubernet|ansible|ci[/-]?cd|pipeline|tunnel|cron|monitor|observab|cost|\bgit\b|worktree|\bcommit|branch|merge|pull request|\bpr\b|rebase"),
     ("integrations", r"\bmcp server\b|connector|integrac|integrat|\bapi\b|webhook|crawl|scrap|browser"),
     ("tooling",      r"plugin|\bskill\b|\bhook\b|agent sdk|marketplace|claude code|slash command|subagent"),
     ("frontend",     r"frontend|front-end|\bui\b|\bux\b|design|css|componente|component|artifact"),
