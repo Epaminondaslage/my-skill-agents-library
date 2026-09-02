@@ -671,13 +671,41 @@ function renderKindFilter() {
   );
 }
 
+// Purpose keys, in tab order: null (Todos) is "1", then one digit per
+// PURPOSES entry. Also used by the global digit-key shortcut handler below.
+const PURPOSE_TAB_KEYS = ["1"].concat(PURPOSES.map((_, i) => String(i + 2)));
+
+function purposeTabTarget(key) {
+  const idx = PURPOSE_TAB_KEYS.indexOf(key);
+  if (idx === -1) return undefined;
+  return idx === 0 ? null : PURPOSES[idx - 1];
+}
+
 function renderPurposeFilter() {
-  return renderPillRow(
-    "filters", t("purposeFilterAll"), PURPOSES, (p) => purposeLabel(p), filterPurpose,
-    (p) => { filterPurpose = p; render(); },
-    (p) => countBy(items, "purpose", p),
-    (p) => "pill-purpose-" + p
-  );
+  const tabs = document.createElement("div");
+  tabs.className = "purpose-tabs";
+  [null].concat(PURPOSES).forEach((p, i) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    const label = p === null ? t("purposeFilterAll") : purposeLabel(p);
+    const count = countBy(items, "purpose", p);
+    const active = p === filterPurpose;
+    const colorClass = p !== null ? " pill-purpose-" + p : "";
+    btn.className = "purpose-tab" + (active ? " active" : "") + colorClass;
+    btn.onclick = () => { filterPurpose = p; render(); };
+
+    const text = document.createElement("span");
+    text.textContent = label + " " + count;
+    btn.appendChild(text);
+
+    const kbd = document.createElement("kbd");
+    kbd.className = "tab-shortcut";
+    kbd.textContent = PURPOSE_TAB_KEYS[i];
+    btn.appendChild(kbd);
+
+    tabs.appendChild(btn);
+  });
+  return tabs;
 }
 
 function renderSortFilter() {
@@ -1104,6 +1132,18 @@ function closeModal() {
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && openModalId !== null) closeModal();
   if (e.key === "Escape" && addModalOpen) closeAddModal();
+
+  // Digit shortcuts jump straight to a purpose tab (1 = Todos, 2..n = each
+  // purpose in order, matching the <kbd> hint shown on the tab itself).
+  const tag = (e.target && e.target.tagName) || "";
+  const typing = tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
+  if (!typing && !openModalId && !addModalOpen && !e.ctrlKey && !e.metaKey && !e.altKey) {
+    const target = purposeTabTarget(e.key);
+    if (target !== undefined) {
+      filterPurpose = target;
+      render();
+    }
+  }
 });
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -1503,8 +1543,33 @@ button.pill-purpose-frontend     { background: var(--c-frontend-bg);     color: 
 button.pill-purpose-other        { background: var(--c-other-bg);        color: var(--c-other-fg);        border-color: var(--c-other-fg); }
 button.pill-purpose-general.btn-primary, button.pill-purpose-devops.btn-primary, button.pill-purpose-spec-ops.btn-primary,
 button.pill-purpose-quality.btn-primary, button.pill-purpose-security.btn-primary, button.pill-purpose-integrations.btn-primary,
-button.pill-purpose-tooling.btn-primary, button.pill-purpose-frontend.btn-primary, button.pill-purpose-other.btn-primary {
+button.pill-purpose-tooling.btn-primary, button.pill-purpose-frontend.btn-primary, button.pill-purpose-other.btn-primary,
+button.pill-purpose-general.active, button.pill-purpose-devops.active, button.pill-purpose-spec-ops.active,
+button.pill-purpose-quality.active, button.pill-purpose-security.active, button.pill-purpose-integrations.active,
+button.pill-purpose-tooling.active, button.pill-purpose-frontend.active, button.pill-purpose-other.active {
   box-shadow: inset 0 0 0 2px currentColor;
+}
+
+/* ---- Aba de purpose: linha única, abas distribuídas lado a lado em vez
+   da linha de pills (mesmas cores por purpose de antes) ---- */
+.purpose-tabs {
+  display: flex; margin-bottom: 1rem; border-radius: 8px;
+  box-shadow: 0 0 0 1px var(--border);
+  overflow-x: auto; overflow-y: hidden;
+}
+.purpose-tab {
+  flex: 1 0 auto;
+  display: flex; align-items: center; justify-content: center; gap: .4rem;
+  padding: .5rem .7rem;
+  border: none; border-right: 1px solid var(--border);
+  background: var(--surface); color: var(--fg);
+  font: inherit; font-size: .85rem; cursor: pointer; white-space: nowrap;
+}
+.purpose-tab:last-child { border-right: none; }
+.purpose-tab.active { font-weight: 600; box-shadow: inset 0 -3px 0 0 currentColor; }
+.tab-shortcut {
+  font-size: .7rem; opacity: .6; border: 1px solid currentColor; border-radius: 4px;
+  padding: 0 .3rem; line-height: 1.4;
 }
 
 /* ---- Pills de filtro por status, mesma cor do badge/borda do card ---- */
