@@ -1386,7 +1386,7 @@ body { margin: 0; font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-se
 .add-form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: .7rem; margin-bottom: .7rem; }
 
 label { display: block; font-size: .78rem; color: var(--muted); margin-bottom: .6rem; }
-label input, label select {
+label input, label select, label textarea {
   display: block;
   width: 100%;
   margin-top: .25rem;
@@ -1397,6 +1397,7 @@ label input, label select {
   color: var(--fg);
   font-size: .85rem;
 }
+label textarea { font-family: inherit; resize: vertical; min-height: 4.5rem; }
 .function-field {
   display: block;
   width: 100%;
