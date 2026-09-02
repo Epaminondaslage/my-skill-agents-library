@@ -206,14 +206,15 @@ function renderTopbar() {
 }
 
 const GITHUB_MARK_SVG =
-  '<svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true">' +
-  '<path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38' +
-  '0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13' +
-  '-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07' +
-  '-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82' +
-  '.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12' +
-  '.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2' +
-  '0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>';
+  '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">' +
+  '<path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 ' +
+  '0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c' +
+  '-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998' +
+  '.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22' +
+  '-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 ' +
+  '2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 ' +
+  '1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 ' +
+  '0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>';
 
 function renderSearchBox() {
   const wrap = document.createElement("div");
@@ -298,32 +299,51 @@ function searchGithub() {
     });
 }
 
+function renderGithubResultsHeader(labelText) {
+  const header = document.createElement("div");
+  header.className = "gh-results-header";
+  const label = document.createElement("span");
+  label.textContent = labelText;
+  header.appendChild(label);
+  const closeBtn = document.createElement("button");
+  closeBtn.type = "button";
+  closeBtn.className = "gh-results-close";
+  closeBtn.title = "fechar resultados";
+  closeBtn.setAttribute("aria-label", "fechar resultados");
+  closeBtn.textContent = "✕";
+  closeBtn.onclick = () => {
+    ghResults = null;
+    ghError = "";
+    render();
+  };
+  header.appendChild(closeBtn);
+  return header;
+}
+
 function renderGithubResults() {
   if (!ghLoading && !ghError && ghResults === null) return null;
   const box = document.createElement("div");
   box.className = "gh-results card";
 
   if (ghLoading) {
-    const p = document.createElement("div");
-    p.className = "gh-results-status";
-    p.textContent = "buscando no GitHub…";
-    box.appendChild(p);
+    box.appendChild(renderGithubResultsHeader("buscando no GitHub…"));
     return box;
   }
   if (ghError) {
+    box.appendChild(renderGithubResultsHeader("resultados do GitHub"));
     const p = document.createElement("div");
     p.className = "gh-results-status error";
     p.textContent = ghError;
     box.appendChild(p);
     return box;
   }
-  if (ghResults.length === 0) {
-    const p = document.createElement("div");
-    p.className = "gh-results-status";
-    p.textContent = "nenhum repositório encontrado";
-    box.appendChild(p);
-    return box;
-  }
+
+  box.appendChild(renderGithubResultsHeader(
+    ghResults.length === 0
+      ? "nenhum repositório encontrado"
+      : ghResults.length + " repositório" + (ghResults.length === 1 ? "" : "s") + " encontrado" + (ghResults.length === 1 ? "" : "s")
+  ));
+  if (ghResults.length === 0) return box;
 
   const knownRepos = {};
   items.forEach((i) => {
@@ -331,8 +351,11 @@ function renderGithubResults() {
   });
 
   ghResults.forEach((repo) => {
+    const wrap = document.createElement("div");
+    wrap.className = "gh-result";
+
     const row = document.createElement("div");
-    row.className = "gh-result";
+    row.className = "gh-result-row";
 
     const main = document.createElement("div");
     main.className = "gh-result-main";
@@ -360,14 +383,16 @@ function renderGithubResults() {
     const already = !!knownRepos[(repo.full_name || "").toLowerCase()] || !!ghAddedRepos[repo.full_name];
     const addBtn = document.createElement("button");
     addBtn.type = "button";
-    addBtn.className = "btn btn-sm";
+    addBtn.className = "btn btn-sm gh-result-add";
     addBtn.textContent = already ? "já no catálogo" : "+ incluir";
     addBtn.disabled = already;
     row.appendChild(addBtn);
 
+    wrap.appendChild(row);
+
     const rowErr = document.createElement("div");
     rowErr.className = "error gh-result-error";
-    row.appendChild(rowErr);
+    wrap.appendChild(rowErr);
 
     addBtn.onclick = () => {
       showError(rowErr, "");
@@ -390,7 +415,7 @@ function renderGithubResults() {
         });
     };
 
-    box.appendChild(row);
+    box.appendChild(wrap);
   });
 
   return box;
@@ -1035,17 +1060,36 @@ body { margin: 0; font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-se
 .search-gh-btn { display: inline-flex; align-items: center; padding: .5rem .6rem; }
 
 .gh-results { margin-bottom: 1rem; padding: .75rem; }
-.gh-results-status { font-size: .85rem; color: var(--muted); padding: .3rem 0; }
-.gh-results-status.error { color: var(--danger); }
-.gh-result {
+.gh-results-header {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: .75rem;
-  padding: .55rem 0;
+  justify-content: space-between;
+  font-size: .8rem;
+  color: var(--muted);
+  padding-bottom: .4rem;
+  margin-bottom: .2rem;
   border-bottom: 1px solid var(--border);
 }
+.gh-results-close {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: .95rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: .1rem .3rem;
+}
+.gh-results-close:hover { color: var(--danger); }
+.gh-results-status { font-size: .85rem; color: var(--muted); padding: .3rem 0; }
+.gh-results-status.error { color: var(--danger); }
+.gh-result { padding: .55rem 0; border-bottom: 1px solid var(--border); }
 .gh-result:last-child { border-bottom: none; }
+.gh-result-row {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: .75rem;
+}
 .gh-result-main { flex: 1; min-width: 0; }
 .gh-result-name { font-size: .88rem; font-weight: 600; color: var(--accent); text-decoration: none; }
 .gh-result-name:hover { text-decoration: underline; }
@@ -1058,7 +1102,8 @@ body { margin: 0; font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-se
   white-space: nowrap;
 }
 .gh-result-stars { flex-shrink: 0; }
-.gh-result-error { flex-basis: 100%; }
+.gh-result-add { flex-shrink: 0; }
+.gh-result-error:not(:empty) { margin-top: .3rem; }
 .search-icon {
   position: absolute;
   left: .7rem;
