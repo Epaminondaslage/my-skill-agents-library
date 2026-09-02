@@ -80,6 +80,10 @@ let filterStatus = null;
 let filterKind = null;
 let filterPurpose = null;
 let searchQuery = "";
+let ghResults = null; // null = no search done yet, [] = no matches, array = results
+let ghLoading = false;
+let ghError = "";
+let ghAddedRepos = {}; // full_name -> true, for "already added" state after a quick-add
 let sortBy = "default";
 let openModalId = null; // id of the item whose modal is open, or null
 
@@ -236,18 +240,14 @@ function renderSearchBox() {
   const actions = document.createElement("div");
   actions.className = "search-actions";
 
-  const ghLink = document.createElement("a");
-  ghLink.className = "btn btn-sm search-gh-btn";
-  ghLink.title = "buscar no GitHub";
-  ghLink.target = "_blank";
-  ghLink.rel = "noopener noreferrer";
-  ghLink.innerHTML = GITHUB_MARK_SVG;
-  const updateGhHref = () => {
-    const q = searchQuery.trim();
-    ghLink.href = "https://github.com/search?type=repositories" + (q ? "&q=" + encodeURIComponent(q) : "");
-  };
-  updateGhHref();
-  actions.appendChild(ghLink);
+  const ghBtn = document.createElement("button");
+  ghBtn.type = "button";
+  ghBtn.className = "btn btn-sm search-gh-btn";
+  ghBtn.title = "buscar repositórios no GitHub";
+  ghBtn.innerHTML = GITHUB_MARK_SVG;
+  ghBtn.disabled = ghLoading;
+  ghBtn.onclick = () => searchGithub();
+  actions.appendChild(ghBtn);
 
   const addBtn = document.createElement("button");
   addBtn.type = "button";
@@ -264,6 +264,136 @@ function renderSearchBox() {
 
   wrap.appendChild(actions);
   return wrap;
+}
+
+// Live GitHub repo search (github.com/search only filters the catalog we
+// already store — this hits GitHub's public search API from the browser
+// so results carry a real description, url and star count). Unauthenticated,
+// so it's rate-limited to 10 req/min — fine for interactive manual use.
+function searchGithub() {
+  const q = searchQuery.trim();
+  if (!q) return;
+  ghLoading = true;
+  ghError = "";
+  render();
+  fetch("https://api.github.com/search/repositories?q=" + encodeURIComponent(q) + "&sort=stars&order=desc&per_page=8", {
+    headers: { Accept: "application/vnd.github+json" },
+  })
+    .then((r) => r.json().then((data) => ({ ok: r.ok, data })))
+    .then(({ ok, data }) => {
+      ghLoading = false;
+      if (!ok) {
+        ghError = (data && data.message) || "erro na busca do GitHub";
+        ghResults = null;
+      } else {
+        ghResults = data.items || [];
+      }
+      render();
+    })
+    .catch(() => {
+      ghLoading = false;
+      ghError = "falha ao consultar a API do GitHub";
+      ghResults = null;
+      render();
+    });
+}
+
+function renderGithubResults() {
+  if (!ghLoading && !ghError && ghResults === null) return null;
+  const box = document.createElement("div");
+  box.className = "gh-results card";
+
+  if (ghLoading) {
+    const p = document.createElement("div");
+    p.className = "gh-results-status";
+    p.textContent = "buscando no GitHub…";
+    box.appendChild(p);
+    return box;
+  }
+  if (ghError) {
+    const p = document.createElement("div");
+    p.className = "gh-results-status error";
+    p.textContent = ghError;
+    box.appendChild(p);
+    return box;
+  }
+  if (ghResults.length === 0) {
+    const p = document.createElement("div");
+    p.className = "gh-results-status";
+    p.textContent = "nenhum repositório encontrado";
+    box.appendChild(p);
+    return box;
+  }
+
+  const knownRepos = {};
+  items.forEach((i) => {
+    if (i.repo) knownRepos[i.repo.toLowerCase()] = true;
+  });
+
+  ghResults.forEach((repo) => {
+    const row = document.createElement("div");
+    row.className = "gh-result";
+
+    const main = document.createElement("div");
+    main.className = "gh-result-main";
+
+    const link = document.createElement("a");
+    link.href = repo.html_url;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.className = "gh-result-name";
+    link.textContent = repo.full_name;
+    main.appendChild(link);
+
+    if (repo.description) {
+      const desc = document.createElement("div");
+      desc.className = "gh-result-desc";
+      desc.textContent = repo.description;
+      main.appendChild(desc);
+    }
+    row.appendChild(main);
+
+    const stars = renderStars(repo.stargazers_count);
+    stars.classList.add("gh-result-stars");
+    row.appendChild(stars);
+
+    const already = !!knownRepos[(repo.full_name || "").toLowerCase()] || !!ghAddedRepos[repo.full_name];
+    const addBtn = document.createElement("button");
+    addBtn.type = "button";
+    addBtn.className = "btn btn-sm";
+    addBtn.textContent = already ? "já no catálogo" : "+ incluir";
+    addBtn.disabled = already;
+    row.appendChild(addBtn);
+
+    const rowErr = document.createElement("div");
+    rowErr.className = "error gh-result-error";
+    row.appendChild(rowErr);
+
+    addBtn.onclick = () => {
+      showError(rowErr, "");
+      addBtn.disabled = true;
+      addBtn.textContent = "incluindo…";
+      call("add", {
+        name: repo.name,
+        repo: repo.full_name,
+        function: repo.description || "",
+        dev_note: "",
+      })
+        .then(() => {
+          ghAddedRepos[repo.full_name] = true;
+          reload();
+        })
+        .catch((ex) => {
+          addBtn.disabled = false;
+          addBtn.textContent = "+ incluir";
+          showError(rowErr, describe(ex));
+        });
+    };
+
+    box.appendChild(row);
+  });
+
+  return box;
 }
 
 function renderFilters() {
@@ -415,6 +545,8 @@ function render() {
   container.className = "container";
 
   container.appendChild(renderSearchBox());
+  const ghResultsEl = renderGithubResults();
+  if (ghResultsEl) container.appendChild(ghResultsEl);
   container.appendChild(renderFilters());
   container.appendChild(renderKindFilter());
   container.appendChild(renderPurposeFilter());
@@ -901,6 +1033,32 @@ body { margin: 0; font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-se
 .search-field { position: relative; flex: 1; min-width: 0; }
 .search-actions { display: flex; align-items: center; gap: .4rem; flex-shrink: 0; }
 .search-gh-btn { display: inline-flex; align-items: center; padding: .5rem .6rem; }
+
+.gh-results { margin-bottom: 1rem; padding: .75rem; }
+.gh-results-status { font-size: .85rem; color: var(--muted); padding: .3rem 0; }
+.gh-results-status.error { color: var(--danger); }
+.gh-result {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .75rem;
+  padding: .55rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.gh-result:last-child { border-bottom: none; }
+.gh-result-main { flex: 1; min-width: 0; }
+.gh-result-name { font-size: .88rem; font-weight: 600; color: var(--accent); text-decoration: none; }
+.gh-result-name:hover { text-decoration: underline; }
+.gh-result-desc {
+  font-size: .8rem;
+  color: var(--muted);
+  margin-top: .15rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gh-result-stars { flex-shrink: 0; }
+.gh-result-error { flex-basis: 100%; }
 .search-icon {
   position: absolute;
   left: .7rem;
