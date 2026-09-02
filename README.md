@@ -153,14 +153,14 @@ persist an explicit choice in `localStorage`.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/screenshot-dark.png">
-  <img alt="My Skill-Agents Library: status and kind filter pills (status colored to match its cards), sort pills, a folder-style purpose tab bar with per-purpose colors, digit shortcuts and a colored strip under the active tab, a search box below them with GitHub-search and add-item buttons, 36 items in purpose-grouped sections colored by category, and a card grid" src="docs/screenshot-light.png">
+  <img alt="My Skill-Agents Library: status and kind filter pills (status colored to match its cards), sort pills, a search box with GitHub-search and add-item buttons, a folder-style purpose tab bar below it with per-purpose colors, digit shortcuts and a colored strip under the active tab, 36 items in purpose-grouped sections colored by category, and a card grid" src="docs/screenshot-light.png">
 </picture>
 
 The header carries the title, an item count, and the theme toggle. Below it:
-status pills (colored), kind pills, sort pills, the purpose tab bar
+status pills (colored), kind pills, sort pills, the search box with its
+GitHub-search, quick-add and add-item buttons, then the purpose tab bar
 (colored, digit shortcuts, folder-tab styling, always starting on "Todos"),
-then the search box with its GitHub-search, quick-add and add-item
-buttons, then one colored section per purpose holding that purpose's cards.
+then one colored section per purpose holding that purpose's cards.
 
 ---
 

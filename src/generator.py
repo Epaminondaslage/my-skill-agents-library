@@ -809,10 +809,10 @@ function render() {
   container.appendChild(renderFilters());
   container.appendChild(renderKindFilter());
   container.appendChild(renderSortFilter());
-  container.appendChild(renderPurposeFilter());
   container.appendChild(renderSearchBox());
   const ghResultsEl = renderGithubResults();
   if (ghResultsEl) container.appendChild(ghResultsEl);
+  container.appendChild(renderPurposeFilter());
 
   const q = searchQuery.trim().toLowerCase();
   const filtered = items.filter(
