@@ -102,6 +102,10 @@ const STRINGS = {
     modalKind: "kind",
     modalPurpose: "purpose",
     modalNote: "nota pessoal",
+    installedClaudeBadge: "Claude",
+    installedClaudeTitle: "instalado no Claude Code (skill/agent/command/plugin/MCP)",
+    installedCodexBadge: "Codex",
+    installedCodexTitle: "instalado no Codex (skill/plugin/MCP)",
     save: "salvar",
     delete: "excluir",
     refreshGithub: "atualizar do GitHub",
@@ -146,6 +150,10 @@ const STRINGS = {
     modalKind: "kind",
     modalPurpose: "purpose",
     modalNote: "personal note",
+    installedClaudeBadge: "Claude",
+    installedClaudeTitle: "installed on Claude Code (skill/agent/command/plugin/MCP)",
+    installedCodexBadge: "Codex",
+    installedCodexTitle: "installed on Codex (skill/plugin/MCP)",
     save: "save",
     delete: "delete",
     refreshGithub: "refresh from GitHub",
@@ -190,6 +198,10 @@ const STRINGS = {
     modalKind: "kind",
     modalPurpose: "purpose",
     modalNote: "nota personal",
+    installedClaudeBadge: "Claude",
+    installedClaudeTitle: "instalado en Claude Code (skill/agent/command/plugin/MCP)",
+    installedCodexBadge: "Codex",
+    installedCodexTitle: "instalado en Codex (skill/plugin/MCP)",
     save: "guardar",
     delete: "eliminar",
     refreshGithub: "actualizar desde GitHub",
@@ -884,6 +896,26 @@ function renderSections(filtered) {
   return wrap;
 }
 
+// installed_claude/installed_codex are set by the offline, run-by-hand
+// src/detect_installed.py (never by serve.py/api.py) — absent on an item
+// that hasn't been through it yet, same as a false.
+function appendInstalledBadges(head, item) {
+  if (item.installed_claude) {
+    const b = document.createElement("span");
+    b.className = "badge badge-installed-claude";
+    b.title = t("installedClaudeTitle");
+    b.textContent = t("installedClaudeBadge");
+    head.appendChild(b);
+  }
+  if (item.installed_codex) {
+    const b = document.createElement("span");
+    b.className = "badge badge-installed-codex";
+    b.title = t("installedCodexTitle");
+    b.textContent = t("installedCodexBadge");
+    head.appendChild(b);
+  }
+}
+
 function renderItem(item) {
   const card = document.createElement("div");
   card.className = "card editable status-" + item.status;
@@ -924,6 +956,7 @@ function renderItem(item) {
   purposeBadge.className = "badge badge-" + item.purpose;
   purposeBadge.textContent = purposeLabel(item.purpose);
   head.appendChild(purposeBadge);
+  appendInstalledBadges(head, item);
   card.appendChild(head);
 
   const desc = document.createElement("div");
@@ -983,9 +1016,13 @@ function renderModal(item) {
 
   const header = document.createElement("div");
   header.className = "modal-header";
+  const titleRow = document.createElement("div");
+  titleRow.className = "modal-title-row";
   const title = document.createElement("h2");
   title.textContent = item.name || t("noName");
-  header.appendChild(title);
+  titleRow.appendChild(title);
+  appendInstalledBadges(titleRow, item);
+  header.appendChild(titleRow);
   const closeBtn = document.createElement("button");
   closeBtn.type = "button";
   closeBtn.className = "modal-close";
@@ -1475,6 +1512,7 @@ label textarea { font-family: inherit; resize: vertical; min-height: 4.5rem; }
   padding: 1rem 1.25rem 1.25rem;
 }
 .modal-header { display: flex; justify-content: space-between; align-items: center; gap: .75rem; margin-bottom: .8rem; }
+.modal-title-row { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; }
 .modal-header h2 { font-size: 1.05rem; margin: 0; color: var(--strong); word-break: break-word; }
 .modal-close {
   flex-shrink: 0;
@@ -1511,6 +1549,17 @@ label textarea { font-family: inherit; resize: vertical; min-height: 4.5rem; }
 .badge-rejeitada { background: var(--c-rejeitada-bg); color: var(--c-rejeitada-fg); }
 
 .badge-kind { background: var(--border); color: var(--body-txt); }
+/* Anthropic's clay/terracotta for the Claude badge, OpenAI's teal-black for
+   the Codex one — deliberately distinct from the purpose/status palette so
+   "installed" reads as its own signal, not another category. */
+.badge-installed-claude { background: #eee0d1; color: #b34700; }
+.badge-installed-codex  { background: #d6f5f0; color: #0a3b36; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .badge-installed-claude { background: #4a3320; color: #f2c08a; }
+  :root:not([data-theme="light"]) .badge-installed-codex  { background: #123430; color: #7fe3d3; }
+}
+:root[data-theme="dark"] .badge-installed-claude { background: #4a3320; color: #f2c08a; }
+:root[data-theme="dark"] .badge-installed-codex  { background: #123430; color: #7fe3d3; }
 .badge-general      { background: var(--c-general-bg);      color: var(--c-general-fg); }
 .badge-devops       { background: var(--c-devops-bg);       color: var(--c-devops-fg); }
 .badge-spec-ops     { background: var(--c-spec-ops-bg);     color: var(--c-spec-ops-fg); }

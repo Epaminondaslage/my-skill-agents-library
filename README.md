@@ -99,6 +99,23 @@ one-time `src/enrich.py` run backfills the whole catalog; a per-item
 "atualizar do GitHub" button in the modal refreshes one entry on demand, any
 time, without touching its classification.
 
+### Flags what's already installed
+
+A one-time, run-by-hand `src/detect_installed.py` cross-references the
+catalog against what's actually installed on the machine — not against
+CLAUDE.md or AGENTS.md (neither is a manifest: CLAUDE.md is freeform
+instructions, and a global AGENTS.md is typically empty). The real
+signal is filesystem/config state: for Claude Code, `~/.claude/skills`,
+`~/.claude/agents`, `~/.claude/commands`, the plugin names in
+`~/.claude/plugins/installed_plugins.json`, and the MCP server names in
+`~/.claude.json`; for Codex, `~/.codex/skills` and the `[mcp_servers.*]`
+tables in `~/.codex/config.toml`. A match (by a normalized slug of the
+item's name, or its repo's own name) gets a small "Claude" and/or "Codex"
+badge next to its other badges, on the card and in its modal. Like
+`enrich.py`, it's never invoked by `serve.py`/`api.py`/cron — only you,
+whenever you want the badges refreshed: `python3 src/detect_installed.py
+~/.claude/.skill-library/items.json`.
+
 ### A modal, not a form maze
 
 Click any card and every field opens in one place: name, repo, function
@@ -153,7 +170,7 @@ persist an explicit choice in `localStorage`.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/screenshot-dark.png">
-  <img alt="My Skill-Agents Library: status and kind filter pills (status colored to match its cards), sort pills, a search box with GitHub-search and add-item buttons, a folder-style purpose tab bar below it with per-purpose colors, digit shortcuts and a colored strip under the active tab, 36 items in purpose-grouped sections colored by category, and a card grid" src="docs/screenshot-light.png">
+  <img alt="My Skill-Agents Library: status and kind filter pills (status colored to match its cards), sort pills, a search box with GitHub-search and add-item buttons, a folder-style purpose tab bar below it with per-purpose colors, digit shortcuts and a colored strip under the active tab, 38 items in purpose-grouped sections colored by category, a card grid with some cards carrying a Claude and/or Codex badge for items detected as installed" src="docs/screenshot-light.png">
 </picture>
 
 The header carries the title, an item count, and the theme toggle. Below it:
@@ -354,6 +371,9 @@ bash src/regenerate.sh force
 
 # One-time GitHub enrichment
 python3 src/enrich.py ~/.claude/.skill-library/items.json
+
+# One-time installed-on-this-machine detection (Claude/Codex badges)
+python3 src/detect_installed.py ~/.claude/.skill-library/items.json
 
 # Docker: rebuild and redeploy after a code change
 docker compose up -d --build

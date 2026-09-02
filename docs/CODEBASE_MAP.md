@@ -136,6 +136,24 @@ tests/
 
 **Gotchas**: a bad repo (404/network error) is caught, logged to stderr, never aborts the batch. **Reclassifies `kind`/`purpose` from scratch on every run** — this overwrites any hand-correction made through the modal. The README warns about this explicitly; there is no flag to skip reclassification.
 
+### `src/detect_installed.py` — one-time installed-on-this-machine detection
+
+**Purpose**: Cross-references the catalog against what's actually installed for Claude Code and/or Codex, run by hand. Sets `installed_claude`/`installed_codex` booleans on every item, which `generator.py` renders as small badges.
+**Entry point**: `python3 src/detect_installed.py <items.json>` (uses `Path.home() / ".claude"` and `Path.home() / ".codex"` as the scan roots — not parameterized past that).
+
+**Exports**: `_slug(name)` (normalizes for matching: lowercase, non-alnum runs → single hyphen), `scan_claude_installed(claude_home)`, `scan_codex_installed(codex_home)` (both pure, return a `set[str]` of slugs), `mark_installed(items, claude_names, codex_names)` (pure, returns a new list), `main(items_path, claude_home, codex_home)`.
+
+**What counts as "installed"** — deliberately NOT CLAUDE.md or AGENTS.md content (neither is a manifest: CLAUDE.md is freeform instructions, a global AGENTS.md is typically empty/near-empty). Real signal:
+- Claude: `~/.claude/skills/*/SKILL.md` (dir name), `~/.claude/agents/**/*.md` (stem), `~/.claude/commands/**/*.md` (stem), plugin names from the keys of `~/.claude/plugins/installed_plugins.json` (`"pluginName@marketplace"` → the part before `@`), and MCP server names from `~/.claude.json`'s top-level `mcpServers` plus every project's own `mcpServers` block.
+- Codex: non-dotdir entries of `~/.codex/skills/*`, and `[mcp_servers.<name>]` table names out of `~/.codex/config.toml` (matched with a regex, not a real TOML parse — stdlib-only, no `tomllib` dependency assumed).
+- Deliberately NOT scanned: plugin/marketplace *catalogs* (`~/.claude/plugins/marketplaces/*`, `~/.codex/.tmp/plugins/*`) — those list what COULD be installed from that marketplace, not what actually is.
+
+**Matching**: `mark_installed` slugs each item's `name`, plus its `repo`'s own name (the part after the last `/`, if `repo` is set), and checks that set against the installed-names set — so e.g. catalog item "Playwright MCP" / repo `microsoft/playwright` matches an installed `playwright` even though the names differ.
+
+**Dependents**: nothing in the runtime path — same "never invoked by serve.py/api.py or cron" contract as `enrich.py`. Only `test_detect_installed.py` and the README's command reference call it.
+
+**Gotchas**: like `enrich.py`, writes `items.json` directly (atomic tmp+`os.replace`), bypassing `api.py` — fine for a hand-run enrichment script, but it means concurrent edits through the running site during a `detect_installed.py` run could race. Matching is purely by normalized name/repo-basename; a catalog item whose name doesn't resemble its actual skill/plugin/MCP directory name won't get flagged even if it really is installed.
+
 ### `src/generator.py` — static site renderer
 
 **Purpose**: Pure renderer, read-only over `items.json`, emits `index.html`/`app.js`/`styles.css`.
@@ -163,6 +181,7 @@ tests/
 - `renderGithubResults()` / `renderGithubResultsHeader()` render the loading/error/empty/populated states of the GitHub search panel (name, description, ★ stars, link, a per-result "+ incluir" that POSTs `action: "add"` directly, and a "✕" that clears `ghResults`).
 - `renderSections()` groups filtered items by `purpose` in fixed order, one colored section per purpose — including empty ones, which still render the header bar plus a "nenhum item aqui" placeholder instead of being omitted, so the tab bar's purpose colors stay a stable landmark whether or not a purpose currently has matches. The header shows a count only for the section matching the active tab (`purpose === filterPurpose`) — the tab bar already carries every purpose's count, so repeating it on every section in the "Todos" view would be noise, but the single section shown once a tab is selected gets its own "(n)" back.
 - `renderModal(item)` is the single edit surface: every `EDITABLE` field (`function` is a `<textarea>`, not `<input>`), plus `status`/`kind`/`purpose` selects, `personal_note`, and save/delete/refresh-from-GitHub actions. Save batches `edit` + conditional `set_status` + conditional `set_note` in one `Promise.all`.
+- `appendInstalledBadges(container, item)` appends a "Claude" and/or "Codex" `<span class="badge badge-installed-claude|codex">` to `container` when `item.installed_claude`/`installed_codex` is truthy (set by the offline `detect_installed.py`, absent — falsy — on anything that hasn't been through it). Called from both `renderItem()` (into `.card-head`, after the purpose badge) and `renderModal()` (into a `.modal-title-row` wrapping the `<h2>`, so the badges sit right next to the item name instead of fighting the header's `justify-content: space-between` with the close button).
 - Every DOM node is built with `createElement`/`textContent` — never `innerHTML` for item/repo data — the render-side half of the XSS defense (the write-side half is `api.py`'s field length caps and `_json_for_script_tag`'s `</script>` escape). The only `.innerHTML` uses are static trusted constants (`GITHUB_MARK_SVG`, the "✕" glyph), never data from `items.json` or the GitHub API.
 
 **Gotchas**: a missing `items.json` is treated as the normal first-run state (warn + empty site); a *corrupt* one raises, never silently rendered as "empty." `render()` fully clears and rebuilds `#app` on every keystroke in search — it explicitly saves/restores the search `<input>`'s focus and caret (`selectionStart`) across that rebuild, since a naive full-DOM-replace would otherwise steal focus on every character typed. `ghResults` is tri-state (`null` = never searched, `[]` = zero matches, array = results) to distinguish "hidden panel" from "empty results panel."
