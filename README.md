@@ -71,7 +71,10 @@ The grid is not one flat list: it's one section per purpose, each with a
 colored header matching that purpose's badge, so the shape of your queue
 (mostly Tooling? nothing in Security?) is visible at a glance. Filter by
 status, kind, or purpose; sort by most stars, most recently updated, or
-name; every filter and the sort combine.
+name; every filter and the sort combine. The status pills (candidata /
+aprovada / rejeitada) are colored the same as the status badge on every
+card, so a pill and its matching cards read as one color at a glance —
+same treatment the purpose pills already had.
 
 ### Pulls real GitHub data
 
@@ -88,6 +91,9 @@ Click any card and every field opens in one place: name, repo, function
 (a resizable ~10-line text area, not a cramped one-liner), dev note, status,
 kind, purpose, your personal note, plus save/delete/refresh. Matches My
 Harness Library's click-to-edit pattern instead of a wall of inline inputs.
+Adding a new item works the same way now — no permanent inline form taking
+up space, just a button that opens the same kind of modal, empty or
+prefilled from a search.
 
 ![Edit modal open on a catalog item, showing every field and the save/delete/refresh-from-GitHub actions](docs/screenshot-modal.png)
 
@@ -102,14 +108,16 @@ instead of waiting for the next regeneration pass.
 
 ### Live search, and a way to find what isn't cataloged yet
 
-A search box filters the grid by name, repo, or function as you type,
-combining with the status/kind/purpose filters already in place. Next to it,
-a GitHub button queries `api.github.com/search/repositories` straight from
-the browser (unauthenticated, no backend involved) and lists results inline:
-name, description, star count, a link to the repo, and a per-result
-"+ incluir" that adds it to the catalog on the spot, already marked if it's
-there. There's also a "+ incluir no catálogo" shortcut that jumps straight
-to the add-item form with your search term as a starting name.
+Below the status/kind/purpose/sort pills, a search box filters the grid by
+name, repo, or function as you type. Next to it, a GitHub button queries
+`api.github.com/search/repositories` straight from the browser
+(unauthenticated, no backend involved) and lists results inline: name,
+description, star count, a link to the repo, and a per-result "+ incluir"
+that adds it to the catalog on the spot, already marked if it's there.
+Two more buttons sit beside the search field: "+ incluir no catálogo" opens
+the add-item modal prefilled with your search term as a starting name, and
+"adicionar item" opens the same modal empty, for a manual entry with no
+search involved.
 
 ### Portuguese, English, or Spanish UI
 
@@ -131,14 +139,13 @@ persist an explicit choice in `localStorage`.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/screenshot-dark.png">
-  <img alt="My Skill-Agents Library: a live search box with inline GitHub search results (name, description, stars, add button), 36 items in purpose-grouped sections colored by category, status/kind/purpose/sort filter pills, and a card grid" src="docs/screenshot-light.png">
+  <img alt="My Skill-Agents Library: status/kind/purpose/sort filter pills (status and purpose pills colored to match their cards), a search box below them with GitHub-search and add-item buttons, 36 items in purpose-grouped sections colored by category, and a card grid" src="docs/screenshot-light.png">
 </picture>
 
 The header carries the title, an item count, and the theme toggle. Below it:
-the search box with its GitHub-search and quick-add buttons (shown here with
-live GitHub results open), status pills, kind pills, purpose pills (colored
-to match), sort pills, the add-item form, then one colored section per
-purpose holding that purpose's cards.
+status pills (colored), kind pills, purpose pills (colored to match), sort
+pills, then the search box with its GitHub-search, quick-add and add-item
+buttons, then one colored section per purpose holding that purpose's cards.
 
 ---
 

@@ -245,6 +245,8 @@ let ghError = "";
 let ghAddedRepos = {}; // full_name -> true, for "already added" state after a quick-add
 let sortBy = "default";
 let openModalId = null; // id of the item whose modal is open, or null
+let addModalOpen = false; // whether the "adicionar item" modal is open
+let addModalPrefillName = ""; // name to prefill when opening it from a search
 
 // ---- tema: claro/escuro/auto, persistido em localStorage -----------------
 function currentTheme() {
@@ -427,17 +429,32 @@ function renderSearchBox() {
   addBtn.type = "button";
   addBtn.className = "btn btn-sm search-add-btn";
   addBtn.textContent = t("addToCatalog");
-  addBtn.onclick = () => {
-    const nameInput = document.getElementById("add-field-name");
-    const form = document.getElementById("add-form");
-    if (nameInput && !nameInput.value) nameInput.value = searchQuery.trim();
-    if (form) form.scrollIntoView({ behavior: "smooth", block: "center" });
-    if (nameInput) nameInput.focus();
-  };
+  addBtn.onclick = () => openAddModal(searchQuery.trim());
   actions.appendChild(addBtn);
+
+  const newItemBtn = document.createElement("button");
+  newItemBtn.type = "button";
+  newItemBtn.className = "btn btn-sm search-newitem-btn";
+  newItemBtn.textContent = t("addItemHeading");
+  newItemBtn.onclick = () => openAddModal("");
+  actions.appendChild(newItemBtn);
 
   wrap.appendChild(actions);
   return wrap;
+}
+
+function openAddModal(prefillName) {
+  addModalOpen = true;
+  addModalPrefillName = prefillName || "";
+  render();
+  const nameInput = document.getElementById("add-field-name");
+  if (nameInput) nameInput.focus();
+}
+
+function closeAddModal() {
+  addModalOpen = false;
+  addModalPrefillName = "";
+  render();
 }
 
 // Live GitHub repo search (github.com/search only filters the catalog we
@@ -593,21 +610,12 @@ function renderGithubResults() {
 }
 
 function renderFilters() {
-  const filters = document.createElement("div");
-  filters.className = "filters";
-  [null].concat(STATUSES).forEach((s) => {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.textContent = s === null ? t("filterAll") : statusLabel(s);
-    const active = s === null ? filterStatus === null : s === filterStatus;
-    btn.className = "btn btn-sm" + (active ? " btn-primary" : "");
-    btn.onclick = () => {
-      filterStatus = s;
-      render();
-    };
-    filters.appendChild(btn);
-  });
-  return filters;
+  return renderPillRow(
+    "filters", t("filterAll"), STATUSES, (s) => statusLabel(s), filterStatus,
+    (s) => { filterStatus = s; render(); },
+    (s) => countBy(items, "status", s),
+    (s) => "badge-" + s
+  );
 }
 
 function sortItems(list) {
@@ -680,10 +688,27 @@ function renderSortFilter() {
   );
 }
 
-function renderAddForm() {
+function renderAddModal() {
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.onclick = (e) => {
+    if (e.target === overlay) closeAddModal();
+  };
+
+  const modal = document.createElement("div");
+  modal.className = "modal";
+  overlay.appendChild(modal);
+
+  const closeBtn = document.createElement("button");
+  closeBtn.type = "button";
+  closeBtn.className = "modal-close";
+  closeBtn.textContent = "✕";
+  closeBtn.onclick = closeAddModal;
+  modal.appendChild(closeBtn);
+
   const form = document.createElement("form");
   form.id = "add-form";
-  form.className = "add-form card";
+  form.className = "add-form";
 
   const heading = document.createElement("h2");
   heading.textContent = t("addItemHeading");
@@ -701,6 +726,7 @@ function renderAddForm() {
     input.type = "text";
     input.name = field;
     input.id = "add-field-" + field;
+    if (field === "name") input.value = addModalPrefillName;
     label.appendChild(input);
     grid.appendChild(label);
     inputs[field] = input;
@@ -723,9 +749,13 @@ function renderAddForm() {
     EDITABLE.forEach((f) => {
       body[f] = inputs[f].value;
     });
-    call("add", body).then(reload, (ex) => handleError(ex, err));
+    call("add", body).then(() => {
+      closeAddModal();
+      reload();
+    }, (ex) => handleError(ex, err));
   };
-  return form;
+  modal.appendChild(form);
+  return overlay;
 }
 
 function render() {
@@ -740,14 +770,13 @@ function render() {
   const container = document.createElement("div");
   container.className = "container";
 
-  container.appendChild(renderSearchBox());
-  const ghResultsEl = renderGithubResults();
-  if (ghResultsEl) container.appendChild(ghResultsEl);
   container.appendChild(renderFilters());
   container.appendChild(renderKindFilter());
   container.appendChild(renderPurposeFilter());
   container.appendChild(renderSortFilter());
-  container.appendChild(renderAddForm());
+  container.appendChild(renderSearchBox());
+  const ghResultsEl = renderGithubResults();
+  if (ghResultsEl) container.appendChild(ghResultsEl);
 
   const q = searchQuery.trim().toLowerCase();
   const filtered = items.filter(
@@ -767,6 +796,7 @@ function render() {
 
   const openItem = items.find((i) => i.id === openModalId);
   if (openItem) app.appendChild(renderModal(openItem));
+  if (addModalOpen) app.appendChild(renderAddModal());
 
   if (restoreSearchFocus) {
     const newInput = app.querySelector(".search-input");
@@ -1073,6 +1103,7 @@ function closeModal() {
 
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && openModalId !== null) closeModal();
+  if (e.key === "Escape" && addModalOpen) closeAddModal();
 });
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -1473,6 +1504,14 @@ button.pill-purpose-other        { background: var(--c-other-bg);        color: 
 button.pill-purpose-general.btn-primary, button.pill-purpose-devops.btn-primary, button.pill-purpose-spec-ops.btn-primary,
 button.pill-purpose-quality.btn-primary, button.pill-purpose-security.btn-primary, button.pill-purpose-integrations.btn-primary,
 button.pill-purpose-tooling.btn-primary, button.pill-purpose-frontend.btn-primary, button.pill-purpose-other.btn-primary {
+  box-shadow: inset 0 0 0 2px currentColor;
+}
+
+/* ---- Pills de filtro por status, mesma cor do badge/borda do card ---- */
+button.badge-candidata { background: var(--c-candidata-bg); color: var(--c-candidata-fg); border-color: var(--c-candidata-fg); }
+button.badge-aprovada  { background: var(--c-aprovada-bg);  color: var(--c-aprovada-fg);  border-color: var(--c-aprovada-fg); }
+button.badge-rejeitada { background: var(--c-rejeitada-bg); color: var(--c-rejeitada-fg); border-color: var(--c-rejeitada-fg); }
+button.badge-candidata.btn-primary, button.badge-aprovada.btn-primary, button.badge-rejeitada.btn-primary {
   box-shadow: inset 0 0 0 2px currentColor;
 }
 
