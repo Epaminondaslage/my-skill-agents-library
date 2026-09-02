@@ -860,7 +860,7 @@ function renderSections(filtered) {
 
     const head = document.createElement("div");
     head.className = "section-head purpose-" + purpose;
-    head.textContent = purposeLabel(purpose) + " (" + group.length + ")";
+    head.textContent = purposeLabel(purpose);
     section.appendChild(head);
 
     if (group.length === 0) {
