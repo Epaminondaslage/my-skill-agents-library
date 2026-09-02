@@ -695,20 +695,14 @@ function renderPurposeFilter() {
     const btn = document.createElement("button");
     btn.type = "button";
     const label = p === null ? t("purposeFilterAll") : purposeLabel(p);
-    const count = countBy(items, "purpose", p);
     const active = p === filterPurpose;
     const colorClass = p !== null ? " pill-purpose-" + p : "";
     btn.className = "purpose-tab" + (active ? " active" : "") + colorClass;
     btn.onclick = () => { filterPurpose = p; render(); };
 
     const text = document.createElement("span");
-    text.textContent = label + " " + count;
+    text.textContent = label;
     btn.appendChild(text);
-
-    const kbd = document.createElement("kbd");
-    kbd.className = "tab-shortcut";
-    kbd.textContent = PURPOSE_TAB_KEYS[i];
-    btn.appendChild(kbd);
 
     tabs.appendChild(btn);
   });
@@ -851,17 +845,15 @@ function render() {
   }
 }
 
-// One section per purpose (fixed order, empty ones omitted). The purpose
-// filter above narrows to a single section instead of hiding the rest.
+// One section per purpose (fixed order, shown even when empty so the
+// colored header bar stays a stable landmark). The purpose filter above
+// narrows to a single section instead of hiding the rest.
 function renderSections(filtered) {
   const wrap = document.createElement("div");
   const purposesToShow = filterPurpose ? [filterPurpose] : PURPOSES;
 
-  let any = false;
   purposesToShow.forEach((purpose) => {
     const group = sortItems(filtered.filter((i) => i.purpose === purpose));
-    if (group.length === 0) return;
-    any = true;
 
     const section = document.createElement("div");
     section.className = "purpose-section";
@@ -871,20 +863,21 @@ function renderSections(filtered) {
     head.textContent = purposeLabel(purpose) + " (" + group.length + ")";
     section.appendChild(head);
 
-    const grid = document.createElement("div");
-    grid.className = "grid";
-    group.forEach((item) => grid.appendChild(renderItem(item)));
-    section.appendChild(grid);
+    if (group.length === 0) {
+      const empty = document.createElement("div");
+      empty.className = "empty empty-section";
+      empty.textContent = t("emptySection");
+      section.appendChild(empty);
+    } else {
+      const grid = document.createElement("div");
+      grid.className = "grid";
+      group.forEach((item) => grid.appendChild(renderItem(item)));
+      section.appendChild(grid);
+    }
 
     wrap.appendChild(section);
   });
 
-  if (!any) {
-    const empty = document.createElement("div");
-    empty.className = "empty";
-    empty.textContent = t("emptySection");
-    wrap.appendChild(empty);
-  }
   return wrap;
 }
 
@@ -1585,10 +1578,6 @@ button.pill-purpose-tooling.btn-primary, button.pill-purpose-frontend.btn-primar
 .purpose-tab.active {
   font-weight: 600; background: var(--bg);
   box-shadow: inset 0 1px 0 0 var(--border);
-}
-.tab-shortcut {
-  font-size: .7rem; opacity: .6; border: 1px solid currentColor; border-radius: 4px;
-  padding: 0 .3rem; line-height: 1.4;
 }
 .purpose-tab-accent {
   height: 4px; border-radius: 0 0 6px 6px;
