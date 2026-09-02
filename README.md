@@ -119,12 +119,18 @@ whenever you want the badges refreshed: `python3 src/detect_installed.py
 ### A modal, not a form maze
 
 Click any card and every field opens in one place: name, repo, function
-(a resizable ~10-line text area, not a cramped one-liner), dev note, status,
-kind, purpose, your personal note, plus save/delete/refresh. Matches My
-Harness Library's click-to-edit pattern instead of a wall of inline inputs.
-Adding a new item works the same way now — no permanent inline form taking
-up space, just a button that opens the same kind of modal, empty or
-prefilled from a search.
+(a resizable ~10-line text area, not a cramped one-liner), dev note (its
+label carries a "✉️🏠" hint — it's the *internal* note, unlike the plain
+personal note further down), status, kind, purpose, your personal note,
+plus save/delete/refresh. Matches My Harness Library's click-to-edit
+pattern instead of a wall of inline inputs. Adding a new item works the
+same way now — no permanent inline form taking up space, just a button
+that opens the same kind of modal, empty or prefilled from a search.
+
+Each card itself is 3 stacked lines: every badge (status, kind, purpose,
+Claude/Codex) on its own line first, the name below it, then stars + a
+small GitHub mark + the repo link — so a long name never squeezes the
+badges into a cramped column.
 
 ![Edit modal open on a catalog item, showing every field and the save/delete/refresh-from-GitHub actions](docs/screenshot-modal.png)
 
@@ -170,7 +176,7 @@ persist an explicit choice in `localStorage`.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/screenshot-dark.png">
-  <img alt="My Skill-Agents Library: status and kind filter pills (status colored to match its cards), sort pills, a search box with GitHub-search and add-item buttons, a folder-style purpose tab bar below it with per-purpose colors, digit shortcuts and a colored strip under the active tab, 38 items in purpose-grouped sections colored by category, a card grid with some cards carrying a Claude and/or Codex badge for items detected as installed" src="docs/screenshot-light.png">
+  <img alt="My Skill-Agents Library: status and kind filter pills (status colored to match its cards), sort pills, a search box with GitHub-search and add-item buttons, a folder-style purpose tab bar below it with per-purpose colors, digit shortcuts and a colored strip under the active tab, 38 items in purpose-grouped sections colored by category, a card grid with each card's badges on their own line above the name, some cards carrying a Claude and/or Codex badge for items detected as installed" src="docs/screenshot-light.png">
 </picture>
 
 The header carries the title, an item count, and the theme toggle. Below it:
