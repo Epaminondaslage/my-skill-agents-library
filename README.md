@@ -109,6 +109,14 @@ name, description, star count, a link to the repo, and a per-result
 there. There's also a "+ incluir no catálogo" shortcut that jumps straight
 to the add-item form with your search term as a starting name.
 
+### Portuguese, English, or Spanish UI
+
+A flag button next to the theme toggle (🇧🇷 → 🇺🇸 → 🇪🇸, cycling) switches
+the interface language, persisted in `localStorage` like the theme. Only UI
+chrome is translated: labels, buttons, filters, placeholders, error
+messages. Item data — name, function, dev note, personal note — is free
+text you typed and is never machine-translated or altered.
+
 ### Themed, matching its sibling
 
 Same "SPS Design System" tokens as My Harness Library: a 56px teal-accented
