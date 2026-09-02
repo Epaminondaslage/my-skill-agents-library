@@ -59,22 +59,181 @@ def render_app_js() -> str:
     return """\
 const API = "/skill-library/api";
 const STATUSES = ["candidata", "aprovada", "rejeitada"];
-const STATUS_LABEL = { candidata: "candidata", aprovada: "aprovada", rejeitada: "rejeitada" };
 const KINDS = ["skill", "agent", "command", "plugin", "mcp"];
-const KIND_LABEL = { skill: "Skills", agent: "Agents", command: "Commands", plugin: "Plugins", mcp: "MCPs" };
 const PURPOSES = [
   "general", "devops", "spec-ops", "quality", "security",
   "integrations", "tooling", "frontend", "other",
 ];
-const PURPOSE_LABEL = {
-  general: "General", devops: "DevOps", "spec-ops": "Spec-Driven Ops", quality: "Quality",
-  security: "Security", integrations: "Integrations", tooling: "Tooling",
-  frontend: "Frontend", other: "Other",
-};
 const SORTS = ["default", "stars", "updated", "name"];
-const SORT_LABEL = { default: "Padrão", stars: "Mais estrelas", updated: "Atualização recente", name: "Nome" };
 const EDITABLE = ["name", "repo", "function", "dev_note"];
 
+// ---- i18n: pt (default) / en / es, persisted in localStorage --------------
+// Item DATA (name/function/dev_note/personal_note) is never translated —
+// only the UI chrome below is. STRINGS falls back to pt for any missing key.
+const LANGS = ["pt", "en", "es"];
+const LANG_FLAG = { pt: "🇧🇷", en: "🇺🇸", es: "🇪🇸" };
+const STRINGS = {
+  pt: {
+    subtitle: "Catálogo de skills, agents, commands, MCPs e plugins para acelerar o ciclo de desenvolvimento de software",
+    itemsCount: (n) => n + " item" + (n === 1 ? "" : "s"),
+    themeToggleTitle: "alternar tema",
+    langToggleTitle: "mudar idioma",
+    searchPlaceholder: "buscar por nome, repo ou função...",
+    ghSearchTitle: "buscar repositórios no GitHub",
+    addToCatalog: "+ incluir no catálogo",
+    ghSearching: "buscando no GitHub…",
+    ghResultsTitle: "resultados do GitHub",
+    ghNoResults: "nenhum repositório encontrado",
+    ghResultsFound: (n) => n + " repositório" + (n === 1 ? "" : "s") + " encontrado" + (n === 1 ? "" : "s"),
+    ghErrorGeneric: "erro na busca do GitHub",
+    ghErrorFetch: "falha ao consultar a API do GitHub",
+    ghCloseTitle: "fechar resultados",
+    ghAlreadyAdded: "já no catálogo",
+    ghInclude: "+ incluir",
+    ghIncluding: "incluindo…",
+    filterAll: "todas",
+    kindFilterAll: "Todos",
+    purposeFilterAll: "Todos",
+    addItemHeading: "adicionar item",
+    addSubmit: "adicionar",
+    noName: "(sem nome)",
+    emptySection: "nenhum item aqui",
+    modalStatus: "status",
+    modalKind: "kind",
+    modalPurpose: "purpose",
+    modalNote: "nota pessoal",
+    save: "salvar",
+    delete: "excluir",
+    refreshGithub: "atualizar do GitHub",
+    confirmDelete: (name) => 'excluir "' + name + '"?',
+    errNoServer: "falha na comunicação com o servidor",
+    errGeneric: (status) => "erro " + status,
+    status: { candidata: "candidata", aprovada: "aprovada", rejeitada: "rejeitada" },
+    kind: { skill: "Skills", agent: "Agents", command: "Commands", plugin: "Plugins", mcp: "MCPs" },
+    purpose: {
+      general: "General", devops: "DevOps", "spec-ops": "Spec-Driven Ops", quality: "Quality",
+      security: "Security", integrations: "Integrations", tooling: "Tooling",
+      frontend: "Frontend", other: "Other",
+    },
+    sort: { default: "Padrão", stars: "Mais estrelas", updated: "Atualização recente", name: "Nome" },
+  },
+  en: {
+    subtitle: "Catalog of skills, agents, commands, MCPs, and plugins to speed up the software development cycle",
+    itemsCount: (n) => n + " item" + (n === 1 ? "" : "s"),
+    themeToggleTitle: "toggle theme",
+    langToggleTitle: "change language",
+    searchPlaceholder: "search by name, repo, or function...",
+    ghSearchTitle: "search repositories on GitHub",
+    addToCatalog: "+ add to catalog",
+    ghSearching: "searching GitHub…",
+    ghResultsTitle: "GitHub results",
+    ghNoResults: "no repositories found",
+    ghResultsFound: (n) => n + " repositor" + (n === 1 ? "y" : "ies") + " found",
+    ghErrorGeneric: "error searching GitHub",
+    ghErrorFetch: "failed to reach the GitHub API",
+    ghCloseTitle: "close results",
+    ghAlreadyAdded: "already in catalog",
+    ghInclude: "+ add",
+    ghIncluding: "adding…",
+    filterAll: "all",
+    kindFilterAll: "All",
+    purposeFilterAll: "All",
+    addItemHeading: "add item",
+    addSubmit: "add",
+    noName: "(no name)",
+    emptySection: "nothing here",
+    modalStatus: "status",
+    modalKind: "kind",
+    modalPurpose: "purpose",
+    modalNote: "personal note",
+    save: "save",
+    delete: "delete",
+    refreshGithub: "refresh from GitHub",
+    confirmDelete: (name) => 'delete "' + name + '"?',
+    errNoServer: "failed to communicate with the server",
+    errGeneric: (status) => "error " + status,
+    status: { candidata: "candidate", aprovada: "approved", rejeitada: "rejected" },
+    kind: { skill: "Skills", agent: "Agents", command: "Commands", plugin: "Plugins", mcp: "MCPs" },
+    purpose: {
+      general: "General", devops: "DevOps", "spec-ops": "Spec-Driven Ops", quality: "Quality",
+      security: "Security", integrations: "Integrations", tooling: "Tooling",
+      frontend: "Frontend", other: "Other",
+    },
+    sort: { default: "Default", stars: "Most stars", updated: "Recently updated", name: "Name" },
+  },
+  es: {
+    subtitle: "Catálogo de skills, agents, commands, MCPs y plugins para acelerar el ciclo de desarrollo de software",
+    itemsCount: (n) => n + " elemento" + (n === 1 ? "" : "s"),
+    themeToggleTitle: "cambiar tema",
+    langToggleTitle: "cambiar idioma",
+    searchPlaceholder: "buscar por nombre, repo o función...",
+    ghSearchTitle: "buscar repositorios en GitHub",
+    addToCatalog: "+ incluir en el catálogo",
+    ghSearching: "buscando en GitHub…",
+    ghResultsTitle: "resultados de GitHub",
+    ghNoResults: "no se encontraron repositorios",
+    ghResultsFound: (n) => n + " repositorio" + (n === 1 ? "" : "s") + " encontrado" + (n === 1 ? "" : "s"),
+    ghErrorGeneric: "error en la búsqueda de GitHub",
+    ghErrorFetch: "fallo al consultar la API de GitHub",
+    ghCloseTitle: "cerrar resultados",
+    ghAlreadyAdded: "ya en el catálogo",
+    ghInclude: "+ incluir",
+    ghIncluding: "incluyendo…",
+    filterAll: "todas",
+    kindFilterAll: "Todos",
+    purposeFilterAll: "Todos",
+    addItemHeading: "añadir elemento",
+    addSubmit: "añadir",
+    noName: "(sin nombre)",
+    emptySection: "nada aquí",
+    modalStatus: "status",
+    modalKind: "kind",
+    modalPurpose: "purpose",
+    modalNote: "nota personal",
+    save: "guardar",
+    delete: "eliminar",
+    refreshGithub: "actualizar desde GitHub",
+    confirmDelete: (name) => '¿eliminar "' + name + '"?',
+    errNoServer: "fallo en la comunicación con el servidor",
+    errGeneric: (status) => "error " + status,
+    status: { candidata: "candidata", aprovada: "aprobada", rejeitada: "rechazada" },
+    kind: { skill: "Skills", agent: "Agents", command: "Commands", plugin: "Plugins", mcp: "MCPs" },
+    purpose: {
+      general: "General", devops: "DevOps", "spec-ops": "Spec-Driven Ops", quality: "Quality",
+      security: "Security", integrations: "Integrations", tooling: "Tooling",
+      frontend: "Frontend", other: "Other",
+    },
+    sort: { default: "Predeterminado", stars: "Más estrellas", updated: "Actualización reciente", name: "Nombre" },
+  },
+};
+
+function currentLang() {
+  try {
+    const l = localStorage.getItem("lang");
+    return LANGS.indexOf(l) !== -1 ? l : "pt";
+  } catch (e) {
+    return "pt";
+  }
+}
+
+function setLang(l) {
+  lang = l;
+  try {
+    localStorage.setItem("lang", l);
+  } catch (e) {}
+}
+
+// t(key) resolves a UI string in the current language, falling back to pt.
+function t(key) {
+  const v = (STRINGS[lang] && STRINGS[lang][key] !== undefined) ? STRINGS[lang][key] : STRINGS.pt[key];
+  return v;
+}
+function statusLabel(s) { return (STRINGS[lang].status && STRINGS[lang].status[s]) || STRINGS.pt.status[s] || s; }
+function kindLabel(k) { return (STRINGS[lang].kind && STRINGS[lang].kind[k]) || STRINGS.pt.kind[k] || k; }
+function purposeLabel(p) { return (STRINGS[lang].purpose && STRINGS[lang].purpose[p]) || STRINGS.pt.purpose[p] || p; }
+function sortLabel(s) { return (STRINGS[lang].sort && STRINGS[lang].sort[s]) || STRINGS.pt.sort[s] || s; }
+
+let lang = currentLang();
 let items = [];
 let filterStatus = null;
 let filterKind = null;
@@ -118,10 +277,23 @@ function renderThemeToggle() {
   const btn = document.createElement("button");
   btn.className = "theme-toggle";
   btn.type = "button";
-  btn.title = "alternar tema";
+  btn.title = t("themeToggleTitle");
   btn.textContent = isDark() ? "☀" : "☾";
   btn.onclick = () => {
     setTheme(isDark() ? "light" : "dark");
+    render();
+  };
+  return btn;
+}
+
+function renderLangToggle() {
+  const btn = document.createElement("button");
+  btn.className = "theme-toggle lang-toggle";
+  btn.type = "button";
+  btn.title = t("langToggleTitle");
+  btn.textContent = LANG_FLAG[lang];
+  btn.onclick = () => {
+    setLang(LANGS[(LANGS.indexOf(lang) + 1) % LANGS.length]);
     render();
   };
   return btn;
@@ -150,7 +322,7 @@ function call(action, body) {
   }).then((r) =>
     r.json().then((data) => {
       if (!r.ok || (data && data.error)) {
-        const err = new Error((data && data.error) || "erro " + r.status);
+        const err = new Error((data && data.error) || t("errGeneric")(r.status));
         err.code = data && data.code;
         err.status = r.status;
         throw err;
@@ -161,7 +333,7 @@ function call(action, body) {
 }
 
 function describe(err) {
-  return (err && err.message) || "falha na comunicação com o servidor";
+  return (err && err.message) || t("errNoServer");
 }
 
 // Refreshes state from the backend and re-renders in place — the served
@@ -189,7 +361,7 @@ function renderTopbar() {
   titleGroup.appendChild(h1);
   const subtitle = document.createElement("span");
   subtitle.className = "topbar-subtitle";
-  subtitle.textContent = "Catálogo de skills, agents, commands, MCPs e plugins para acelerar o ciclo de desenvolvimento de software";
+  subtitle.textContent = t("subtitle");
   titleGroup.appendChild(subtitle);
   bar.appendChild(titleGroup);
 
@@ -197,8 +369,9 @@ function renderTopbar() {
   right.className = "topbar-right";
   const count = document.createElement("span");
   count.className = "topbar-info";
-  count.textContent = items.length + " item" + (items.length === 1 ? "" : "s");
+  count.textContent = t("itemsCount")(items.length);
   right.appendChild(count);
+  right.appendChild(renderLangToggle());
   right.appendChild(renderThemeToggle());
   bar.appendChild(right);
 
@@ -228,7 +401,7 @@ function renderSearchBox() {
   const input = document.createElement("input");
   input.type = "search";
   input.className = "search-input";
-  input.placeholder = "buscar por nome, repo ou função...";
+  input.placeholder = t("searchPlaceholder");
   input.value = searchQuery;
   input.oninput = (e) => {
     searchQuery = e.target.value;
@@ -244,7 +417,7 @@ function renderSearchBox() {
   const ghBtn = document.createElement("button");
   ghBtn.type = "button";
   ghBtn.className = "btn btn-sm search-gh-btn";
-  ghBtn.title = "buscar repositórios no GitHub";
+  ghBtn.title = t("ghSearchTitle");
   ghBtn.innerHTML = GITHUB_MARK_SVG;
   ghBtn.disabled = ghLoading;
   ghBtn.onclick = () => searchGithub();
@@ -253,7 +426,7 @@ function renderSearchBox() {
   const addBtn = document.createElement("button");
   addBtn.type = "button";
   addBtn.className = "btn btn-sm search-add-btn";
-  addBtn.textContent = "+ incluir no catálogo";
+  addBtn.textContent = t("addToCatalog");
   addBtn.onclick = () => {
     const nameInput = document.getElementById("add-field-name");
     const form = document.getElementById("add-form");
@@ -284,7 +457,7 @@ function searchGithub() {
     .then(({ ok, data }) => {
       ghLoading = false;
       if (!ok) {
-        ghError = (data && data.message) || "erro na busca do GitHub";
+        ghError = (data && data.message) || t("ghErrorGeneric");
         ghResults = null;
       } else {
         ghResults = data.items || [];
@@ -293,7 +466,7 @@ function searchGithub() {
     })
     .catch(() => {
       ghLoading = false;
-      ghError = "falha ao consultar a API do GitHub";
+      ghError = t("ghErrorFetch");
       ghResults = null;
       render();
     });
@@ -308,8 +481,8 @@ function renderGithubResultsHeader(labelText) {
   const closeBtn = document.createElement("button");
   closeBtn.type = "button";
   closeBtn.className = "gh-results-close";
-  closeBtn.title = "fechar resultados";
-  closeBtn.setAttribute("aria-label", "fechar resultados");
+  closeBtn.title = t("ghCloseTitle");
+  closeBtn.setAttribute("aria-label", t("ghCloseTitle"));
   closeBtn.textContent = "✕";
   closeBtn.onclick = () => {
     ghResults = null;
@@ -326,11 +499,11 @@ function renderGithubResults() {
   box.className = "gh-results card";
 
   if (ghLoading) {
-    box.appendChild(renderGithubResultsHeader("buscando no GitHub…"));
+    box.appendChild(renderGithubResultsHeader(t("ghSearching")));
     return box;
   }
   if (ghError) {
-    box.appendChild(renderGithubResultsHeader("resultados do GitHub"));
+    box.appendChild(renderGithubResultsHeader(t("ghResultsTitle")));
     const p = document.createElement("div");
     p.className = "gh-results-status error";
     p.textContent = ghError;
@@ -339,9 +512,7 @@ function renderGithubResults() {
   }
 
   box.appendChild(renderGithubResultsHeader(
-    ghResults.length === 0
-      ? "nenhum repositório encontrado"
-      : ghResults.length + " repositório" + (ghResults.length === 1 ? "" : "s") + " encontrado" + (ghResults.length === 1 ? "" : "s")
+    ghResults.length === 0 ? t("ghNoResults") : t("ghResultsFound")(ghResults.length)
   ));
   if (ghResults.length === 0) return box;
 
@@ -384,7 +555,7 @@ function renderGithubResults() {
     const addBtn = document.createElement("button");
     addBtn.type = "button";
     addBtn.className = "btn btn-sm gh-result-add";
-    addBtn.textContent = already ? "já no catálogo" : "+ incluir";
+    addBtn.textContent = already ? t("ghAlreadyAdded") : t("ghInclude");
     addBtn.disabled = already;
     row.appendChild(addBtn);
 
@@ -397,7 +568,7 @@ function renderGithubResults() {
     addBtn.onclick = () => {
       showError(rowErr, "");
       addBtn.disabled = true;
-      addBtn.textContent = "incluindo…";
+      addBtn.textContent = t("ghIncluding");
       call("add", {
         name: repo.name,
         repo: repo.full_name,
@@ -410,7 +581,7 @@ function renderGithubResults() {
         })
         .catch((ex) => {
           addBtn.disabled = false;
-          addBtn.textContent = "+ incluir";
+          addBtn.textContent = t("ghInclude");
           showError(rowErr, describe(ex));
         });
     };
@@ -424,14 +595,14 @@ function renderGithubResults() {
 function renderFilters() {
   const filters = document.createElement("div");
   filters.className = "filters";
-  ["todas"].concat(STATUSES).forEach((s) => {
+  [null].concat(STATUSES).forEach((s) => {
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.textContent = s === "todas" ? "todas" : STATUS_LABEL[s];
-    const active = s === "todas" ? filterStatus === null : s === filterStatus;
+    btn.textContent = s === null ? t("filterAll") : statusLabel(s);
+    const active = s === null ? filterStatus === null : s === filterStatus;
     btn.className = "btn btn-sm" + (active ? " btn-primary" : "");
     btn.onclick = () => {
-      filterStatus = s === "todas" ? null : s;
+      filterStatus = s;
       render();
     };
     filters.appendChild(btn);
@@ -486,7 +657,7 @@ function renderPillRow(className, allLabel, options, labelFn, active, onPick, co
 
 function renderKindFilter() {
   return renderPillRow(
-    "filters", "Todos", KINDS, (k) => KIND_LABEL[k], filterKind,
+    "filters", t("kindFilterAll"), KINDS, (k) => kindLabel(k), filterKind,
     (k) => { filterKind = k; render(); },
     (k) => countBy(items, "kind", k)
   );
@@ -494,7 +665,7 @@ function renderKindFilter() {
 
 function renderPurposeFilter() {
   return renderPillRow(
-    "filters", "Todos", PURPOSES, (p) => PURPOSE_LABEL[p], filterPurpose,
+    "filters", t("purposeFilterAll"), PURPOSES, (p) => purposeLabel(p), filterPurpose,
     (p) => { filterPurpose = p; render(); },
     (p) => countBy(items, "purpose", p),
     (p) => "pill-purpose-" + p
@@ -503,7 +674,7 @@ function renderPurposeFilter() {
 
 function renderSortFilter() {
   return renderPillRow(
-    "filters", null, SORTS, (s) => SORT_LABEL[s], sortBy,
+    "filters", null, SORTS, (s) => sortLabel(s), sortBy,
     (s) => { sortBy = s || "default"; render(); },
     null
   );
@@ -515,7 +686,7 @@ function renderAddForm() {
   form.className = "add-form card";
 
   const heading = document.createElement("h2");
-  heading.textContent = "adicionar item";
+  heading.textContent = t("addItemHeading");
   form.appendChild(heading);
 
   const grid = document.createElement("div");
@@ -542,7 +713,7 @@ function renderAddForm() {
   const submit = document.createElement("button");
   submit.type = "submit";
   submit.className = "btn btn-primary";
-  submit.textContent = "adicionar";
+  submit.textContent = t("addSubmit");
   form.appendChild(submit);
 
   form.onsubmit = (e) => {
@@ -625,7 +796,7 @@ function renderSections(filtered) {
 
     const head = document.createElement("div");
     head.className = "section-head purpose-" + purpose;
-    head.textContent = PURPOSE_LABEL[purpose] + " (" + group.length + ")";
+    head.textContent = purposeLabel(purpose) + " (" + group.length + ")";
     section.appendChild(head);
 
     const grid = document.createElement("div");
@@ -639,7 +810,7 @@ function renderSections(filtered) {
   if (!any) {
     const empty = document.createElement("div");
     empty.className = "empty";
-    empty.textContent = "nenhum item aqui";
+    empty.textContent = t("emptySection");
     wrap.appendChild(empty);
   }
   return wrap;
@@ -671,19 +842,19 @@ function renderItem(item) {
   head.className = "card-head";
   const name = document.createElement("span");
   name.className = "card-name";
-  name.textContent = item.name || "(sem nome)";
+  name.textContent = item.name || t("noName");
   head.appendChild(name);
   const badge = document.createElement("span");
   badge.className = "badge badge-" + item.status;
-  badge.textContent = STATUS_LABEL[item.status] || item.status;
+  badge.textContent = statusLabel(item.status);
   head.appendChild(badge);
   const kindBadge = document.createElement("span");
   kindBadge.className = "badge badge-kind";
-  kindBadge.textContent = KIND_LABEL[item.kind] || item.kind;
+  kindBadge.textContent = kindLabel(item.kind);
   head.appendChild(kindBadge);
   const purposeBadge = document.createElement("span");
   purposeBadge.className = "badge badge-" + item.purpose;
-  purposeBadge.textContent = PURPOSE_LABEL[item.purpose] || item.purpose;
+  purposeBadge.textContent = purposeLabel(item.purpose);
   head.appendChild(purposeBadge);
   card.appendChild(head);
 
@@ -717,7 +888,7 @@ function renderItem(item) {
   STATUSES.forEach((s) => {
     const opt = document.createElement("option");
     opt.value = s;
-    opt.textContent = STATUS_LABEL[s];
+    opt.textContent = statusLabel(s);
     opt.selected = s === item.status;
     select.appendChild(opt);
   });
@@ -745,7 +916,7 @@ function renderModal(item) {
   const header = document.createElement("div");
   header.className = "modal-header";
   const title = document.createElement("h2");
-  title.textContent = item.name || "(sem nome)";
+  title.textContent = item.name || t("noName");
   header.appendChild(title);
   const closeBtn = document.createElement("button");
   closeBtn.type = "button";
@@ -775,44 +946,44 @@ function renderModal(item) {
     fields[field] = input;
   });
 
-  const statusLabel = document.createElement("label");
-  statusLabel.textContent = "status";
+  const statusFieldLabel = document.createElement("label");
+  statusFieldLabel.textContent = t("modalStatus");
   const select = document.createElement("select");
   STATUSES.forEach((s) => {
     const opt = document.createElement("option");
     opt.value = s;
-    opt.textContent = STATUS_LABEL[s];
+    opt.textContent = statusLabel(s);
     opt.selected = s === item.status;
     select.appendChild(opt);
   });
-  statusLabel.appendChild(select);
-  body.appendChild(statusLabel);
+  statusFieldLabel.appendChild(select);
+  body.appendChild(statusFieldLabel);
 
-  const kindLabel = document.createElement("label");
-  kindLabel.textContent = "kind";
+  const kindFieldLabel = document.createElement("label");
+  kindFieldLabel.textContent = t("modalKind");
   const kindSelect = document.createElement("select");
   KINDS.forEach((k) => {
     const opt = document.createElement("option");
     opt.value = k;
-    opt.textContent = KIND_LABEL[k];
+    opt.textContent = kindLabel(k);
     opt.selected = k === item.kind;
     kindSelect.appendChild(opt);
   });
-  kindLabel.appendChild(kindSelect);
-  body.appendChild(kindLabel);
+  kindFieldLabel.appendChild(kindSelect);
+  body.appendChild(kindFieldLabel);
 
-  const purposeLabel = document.createElement("label");
-  purposeLabel.textContent = "purpose";
+  const purposeFieldLabel = document.createElement("label");
+  purposeFieldLabel.textContent = t("modalPurpose");
   const purposeSelect = document.createElement("select");
   PURPOSES.forEach((p) => {
     const opt = document.createElement("option");
     opt.value = p;
-    opt.textContent = PURPOSE_LABEL[p];
+    opt.textContent = purposeLabel(p);
     opt.selected = p === item.purpose;
     purposeSelect.appendChild(opt);
   });
-  purposeLabel.appendChild(purposeSelect);
-  body.appendChild(purposeLabel);
+  purposeFieldLabel.appendChild(purposeSelect);
+  body.appendChild(purposeFieldLabel);
 
   const repoInfo = document.createElement("div");
   repoInfo.className = "card-meta";
@@ -826,7 +997,7 @@ function renderModal(item) {
   body.appendChild(repoInfo);
 
   const noteLabel = document.createElement("label");
-  noteLabel.textContent = "nota pessoal";
+  noteLabel.textContent = t("modalNote");
   const note = document.createElement("textarea");
   note.value = item.personal_note || "";
   noteLabel.appendChild(note);
@@ -841,7 +1012,7 @@ function renderModal(item) {
   const save = document.createElement("button");
   save.type = "button";
   save.className = "btn btn-sm btn-primary";
-  save.textContent = "salvar";
+  save.textContent = t("save");
   save.onclick = () => {
     showError(err, "");
     const body2 = { id: item.id, kind: kindSelect.value, purpose: purposeSelect.value };
@@ -867,9 +1038,9 @@ function renderModal(item) {
   const del = document.createElement("button");
   del.type = "button";
   del.className = "btn btn-sm danger";
-  del.textContent = "excluir";
+  del.textContent = t("delete");
   del.onclick = () => {
-    if (!window.confirm("excluir \\"" + item.name + "\\"?")) return;
+    if (!window.confirm(t("confirmDelete")(item.name))) return;
     showError(err, "");
     call("delete", { id: item.id }).then(() => {
       closeModal();
@@ -881,7 +1052,7 @@ function renderModal(item) {
   const refresh = document.createElement("button");
   refresh.type = "button";
   refresh.className = "btn btn-sm";
-  refresh.textContent = "atualizar do GitHub";
+  refresh.textContent = t("refreshGithub");
   refresh.onclick = () => {
     showError(err, "");
     call("refresh_repo", { id: item.id }).then((updated) => {
