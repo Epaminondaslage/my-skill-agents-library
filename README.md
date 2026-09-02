@@ -98,6 +98,17 @@ exec anything. But every action in the page also re-fetches the live list
 and re-renders in place, so a status change or an edit shows up immediately
 instead of waiting for the next regeneration pass.
 
+### Live search, and a way to find what isn't cataloged yet
+
+A search box filters the grid by name, repo, or function as you type,
+combining with the status/kind/purpose filters already in place. Next to it,
+a GitHub button queries `api.github.com/search/repositories` straight from
+the browser (unauthenticated, no backend involved) and lists results inline:
+name, description, star count, a link to the repo, and a per-result
+"+ incluir" that adds it to the catalog on the spot, already marked if it's
+there. There's also a "+ incluir no catálogo" shortcut that jumps straight
+to the add-item form with your search term as a starting name.
+
 ### Themed, matching its sibling
 
 Same "SPS Design System" tokens as My Harness Library: a 56px teal-accented
@@ -110,13 +121,14 @@ persist an explicit choice in `localStorage`.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/screenshot-dark.png">
-  <img alt="My Skill-Agents Library: 30 items, purpose-grouped sections colored by category, status/kind/purpose/sort filter pills, and a card grid" src="docs/screenshot-light.png">
+  <img alt="My Skill-Agents Library: a live search box with inline GitHub search results (name, description, stars, add button), 36 items in purpose-grouped sections colored by category, status/kind/purpose/sort filter pills, and a card grid" src="docs/screenshot-light.png">
 </picture>
 
 The header carries the title, an item count, and the theme toggle. Below it:
-status pills, kind pills, purpose pills (colored to match), sort pills, the
-add-item form, then one colored section per purpose holding that purpose's
-cards.
+the search box with its GitHub-search and quick-add buttons (shown here with
+live GitHub results open), status pills, kind pills, purpose pills (colored
+to match), sort pills, the add-item form, then one colored section per
+purpose holding that purpose's cards.
 
 ---
 
