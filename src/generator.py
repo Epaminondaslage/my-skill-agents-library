@@ -79,6 +79,7 @@ let items = [];
 let filterStatus = null;
 let filterKind = null;
 let filterPurpose = null;
+let searchQuery = "";
 let sortBy = "default";
 let openModalId = null; // id of the item whose modal is open, or null
 
@@ -198,6 +199,22 @@ function renderTopbar() {
   bar.appendChild(right);
 
   return bar;
+}
+
+function renderSearchBox() {
+  const wrap = document.createElement("div");
+  wrap.className = "search-box";
+  const input = document.createElement("input");
+  input.type = "search";
+  input.className = "search-input";
+  input.placeholder = "buscar por nome, repo ou função...";
+  input.value = searchQuery;
+  input.oninput = (e) => {
+    searchQuery = e.target.value;
+    render();
+  };
+  wrap.appendChild(input);
+  return wrap;
 }
 
 function renderFilters() {
@@ -336,6 +353,9 @@ function renderAddForm() {
 
 function render() {
   const app = document.getElementById("app");
+  const prevFocus = document.activeElement;
+  const restoreSearchFocus = prevFocus && prevFocus.classList && prevFocus.classList.contains("search-input");
+  const caret = restoreSearchFocus ? prevFocus.selectionStart : null;
   while (app.firstChild) app.removeChild(app.firstChild);
 
   app.appendChild(renderTopbar());
@@ -343,17 +363,23 @@ function render() {
   const container = document.createElement("div");
   container.className = "container";
 
+  container.appendChild(renderSearchBox());
   container.appendChild(renderFilters());
   container.appendChild(renderKindFilter());
   container.appendChild(renderPurposeFilter());
   container.appendChild(renderSortFilter());
   container.appendChild(renderAddForm());
 
+  const q = searchQuery.trim().toLowerCase();
   const filtered = items.filter(
     (i) =>
       (!filterStatus || i.status === filterStatus) &&
       (!filterKind || i.kind === filterKind) &&
-      (!filterPurpose || i.purpose === filterPurpose)
+      (!filterPurpose || i.purpose === filterPurpose) &&
+      (q === "" ||
+        (i.name || "").toLowerCase().includes(q) ||
+        (i.repo || "").toLowerCase().includes(q) ||
+        (i.function || "").toLowerCase().includes(q))
   );
 
   container.appendChild(renderSections(filtered));
@@ -362,6 +388,16 @@ function render() {
 
   const openItem = items.find((i) => i.id === openModalId);
   if (openItem) app.appendChild(renderModal(openItem));
+
+  if (restoreSearchFocus) {
+    const newInput = app.querySelector(".search-input");
+    if (newInput) {
+      newInput.focus();
+      try {
+        newInput.setSelectionRange(caret, caret);
+      } catch (e) {}
+    }
+  }
 }
 
 // One section per purpose (fixed order, empty ones omitted). The purpose
@@ -808,6 +844,20 @@ body { margin: 0; font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-se
 .theme-toggle:hover { color: var(--accent); border-color: var(--accent); }
 
 .container { max-width: 1100px; margin: 0 auto; padding: 1.25rem 1rem 3rem; }
+
+/* ---- Busca ---- */
+.search-box { margin-bottom: 1rem; }
+.search-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: .55rem .75rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--strong);
+  font-size: .9rem;
+}
+.search-input:focus { outline: none; border-color: var(--accent); }
 
 /* ---- Filtros ---- */
 .filters { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1rem; }
