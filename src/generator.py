@@ -204,6 +204,10 @@ function renderTopbar() {
 function renderSearchBox() {
   const wrap = document.createElement("div");
   wrap.className = "search-box";
+  const icon = document.createElement("span");
+  icon.className = "search-icon";
+  icon.textContent = "🔍";
+  icon.setAttribute("aria-hidden", "true");
   const input = document.createElement("input");
   input.type = "search";
   input.className = "search-input";
@@ -213,6 +217,7 @@ function renderSearchBox() {
     searchQuery = e.target.value;
     render();
   };
+  wrap.appendChild(icon);
   wrap.appendChild(input);
   return wrap;
 }
@@ -846,11 +851,20 @@ body { margin: 0; font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-se
 .container { max-width: 1100px; margin: 0 auto; padding: 1.25rem 1rem 3rem; }
 
 /* ---- Busca ---- */
-.search-box { margin-bottom: 1rem; }
+.search-box { position: relative; margin-bottom: 1rem; }
+.search-icon {
+  position: absolute;
+  left: .7rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: .85rem;
+  opacity: .6;
+  pointer-events: none;
+}
 .search-input {
   width: 100%;
   box-sizing: border-box;
-  padding: .55rem .75rem;
+  padding: .55rem .75rem .55rem 2rem;
   border-radius: 8px;
   border: 1px solid var(--border);
   background: var(--surface);
