@@ -84,6 +84,11 @@ full-width tabs instead of a wrapping line of pills — same per-purpose
 colors, one line, always opening on "Todos". Each tab shows its digit
 shortcut (1 = Todos, 2 through 9 for each purpose in order); pressing that
 key anywhere outside a text field or an open modal jumps straight to it.
+The active tab drops its bottom edge and a colored strip (that purpose's
+own color, or the teal accent for "Todos") runs the full width right under
+it — like the spine of a hanging folder, so the active tab reads as
+opening straight into the page below instead of just another button. Sits
+above the sort pills and the search box.
 
 ### Pulls real GitHub data
 
@@ -148,14 +153,14 @@ persist an explicit choice in `localStorage`.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/screenshot-dark.png">
-  <img alt="My Skill-Agents Library: status and kind filter pills (status colored to match its cards), a purpose tab bar with per-purpose colors and digit shortcuts, sort pills, a search box below them with GitHub-search and add-item buttons, 36 items in purpose-grouped sections colored by category, and a card grid" src="docs/screenshot-light.png">
+  <img alt="My Skill-Agents Library: status and kind filter pills (status colored to match its cards), sort pills, a folder-style purpose tab bar with per-purpose colors, digit shortcuts and a colored strip under the active tab, a search box below them with GitHub-search and add-item buttons, 36 items in purpose-grouped sections colored by category, and a card grid" src="docs/screenshot-light.png">
 </picture>
 
 The header carries the title, an item count, and the theme toggle. Below it:
-status pills (colored), kind pills, the purpose tab bar (colored, digit
-shortcuts, always starting on "Todos"), sort pills, then the search box
-with its GitHub-search, quick-add and add-item buttons, then one colored
-section per purpose holding that purpose's cards.
+status pills (colored), kind pills, sort pills, the purpose tab bar
+(colored, digit shortcuts, folder-tab styling, always starting on "Todos"),
+then the search box with its GitHub-search, quick-add and add-item
+buttons, then one colored section per purpose holding that purpose's cards.
 
 ---
 

@@ -681,7 +681,14 @@ function purposeTabTarget(key) {
   return idx === 0 ? null : PURPOSES[idx - 1];
 }
 
+// Folder-tab look: the active tab drops its bottom edge and a colored strip
+// (the active purpose's own color, or the accent for "Todos") runs the full
+// width right under the tab row, like the spine of a hanging folder —
+// visually the tab "opens" straight into the page below it.
 function renderPurposeFilter() {
+  const wrap = document.createElement("div");
+  wrap.className = "purpose-tab-wrap";
+
   const tabs = document.createElement("div");
   tabs.className = "purpose-tabs";
   [null].concat(PURPOSES).forEach((p, i) => {
@@ -705,7 +712,14 @@ function renderPurposeFilter() {
 
     tabs.appendChild(btn);
   });
-  return tabs;
+  wrap.appendChild(tabs);
+
+  const accent = document.createElement("div");
+  accent.className = "purpose-tab-accent";
+  accent.style.background = filterPurpose ? "var(--c-" + filterPurpose + "-fg)" : "var(--accent)";
+  wrap.appendChild(accent);
+
+  return wrap;
 }
 
 function renderSortFilter() {
@@ -800,8 +814,8 @@ function render() {
 
   container.appendChild(renderFilters());
   container.appendChild(renderKindFilter());
-  container.appendChild(renderPurposeFilter());
   container.appendChild(renderSortFilter());
+  container.appendChild(renderPurposeFilter());
   container.appendChild(renderSearchBox());
   const ghResultsEl = renderGithubResults();
   if (ghResultsEl) container.appendChild(ghResultsEl);
@@ -1543,33 +1557,42 @@ button.pill-purpose-frontend     { background: var(--c-frontend-bg);     color: 
 button.pill-purpose-other        { background: var(--c-other-bg);        color: var(--c-other-fg);        border-color: var(--c-other-fg); }
 button.pill-purpose-general.btn-primary, button.pill-purpose-devops.btn-primary, button.pill-purpose-spec-ops.btn-primary,
 button.pill-purpose-quality.btn-primary, button.pill-purpose-security.btn-primary, button.pill-purpose-integrations.btn-primary,
-button.pill-purpose-tooling.btn-primary, button.pill-purpose-frontend.btn-primary, button.pill-purpose-other.btn-primary,
-button.pill-purpose-general.active, button.pill-purpose-devops.active, button.pill-purpose-spec-ops.active,
-button.pill-purpose-quality.active, button.pill-purpose-security.active, button.pill-purpose-integrations.active,
-button.pill-purpose-tooling.active, button.pill-purpose-frontend.active, button.pill-purpose-other.active {
+button.pill-purpose-tooling.btn-primary, button.pill-purpose-frontend.btn-primary, button.pill-purpose-other.btn-primary {
   box-shadow: inset 0 0 0 2px currentColor;
 }
 
-/* ---- Aba de purpose: linha única, abas distribuídas lado a lado em vez
-   da linha de pills (mesmas cores por purpose de antes) ---- */
+/* ---- Aba de purpose, estilo pasta/ficheiro: a aba ativa perde a borda
+   inferior e "abre" pra baixo; uma tira colorida (cor da própria aba, ou o
+   accent no "Todos") corre a largura toda logo abaixo, como a lombada de
+   uma pasta suspensa — dá a impressão de a aba ativa continuar na página. */
+.purpose-tab-wrap { margin-bottom: 1rem; }
 .purpose-tabs {
-  display: flex; margin-bottom: 1rem; border-radius: 8px;
+  display: flex; border-radius: 8px 8px 0 0;
   box-shadow: 0 0 0 1px var(--border);
   overflow-x: auto; overflow-y: hidden;
 }
 .purpose-tab {
   flex: 1 0 auto;
   display: flex; align-items: center; justify-content: center; gap: .4rem;
-  padding: .5rem .7rem;
+  padding: .6rem .7rem;
   border: none; border-right: 1px solid var(--border);
   background: var(--surface); color: var(--fg);
   font: inherit; font-size: .85rem; cursor: pointer; white-space: nowrap;
+  position: relative;
 }
-.purpose-tab:last-child { border-right: none; }
-.purpose-tab.active { font-weight: 600; box-shadow: inset 0 -3px 0 0 currentColor; }
+.purpose-tab:first-child { border-radius: 8px 0 0 0; }
+.purpose-tab:last-child { border-right: none; border-radius: 0 8px 0 0; }
+.purpose-tab.active {
+  font-weight: 600; background: var(--bg);
+  box-shadow: inset 0 1px 0 0 var(--border);
+}
 .tab-shortcut {
   font-size: .7rem; opacity: .6; border: 1px solid currentColor; border-radius: 4px;
   padding: 0 .3rem; line-height: 1.4;
+}
+.purpose-tab-accent {
+  height: 4px; border-radius: 0 0 6px 6px;
+  transition: background-color .15s ease;
 }
 
 /* ---- Pills de filtro por status, mesma cor do badge/borda do card ---- */
