@@ -945,26 +945,30 @@ function renderItem(item) {
     }
   };
 
-  const head = document.createElement("div");
-  head.className = "card-head";
-  const name = document.createElement("span");
-  name.className = "card-name";
-  name.textContent = item.name || t("noName");
-  head.appendChild(name);
+  // Line 1: every pill/badge (status, kind, purpose, installed). Line 2:
+  // the name, on its own so a long one never squeezes the badges. Line 3:
+  // stars + GitHub mark + repo link.
+  const badges = document.createElement("div");
+  badges.className = "card-badges";
   const badge = document.createElement("span");
   badge.className = "badge badge-" + item.status;
   badge.textContent = statusLabel(item.status);
-  head.appendChild(badge);
+  badges.appendChild(badge);
   const kindBadge = document.createElement("span");
   kindBadge.className = "badge badge-kind";
   kindBadge.textContent = kindLabel(item.kind);
-  head.appendChild(kindBadge);
+  badges.appendChild(kindBadge);
   const purposeBadge = document.createElement("span");
   purposeBadge.className = "badge badge-" + item.purpose;
   purposeBadge.textContent = purposeLabel(item.purpose);
-  head.appendChild(purposeBadge);
-  appendInstalledBadges(head, item);
-  card.appendChild(head);
+  badges.appendChild(purposeBadge);
+  appendInstalledBadges(badges, item);
+  card.appendChild(badges);
+
+  const name = document.createElement("div");
+  name.className = "card-name";
+  name.textContent = item.name || t("noName");
+  card.appendChild(name);
 
   const desc = document.createElement("div");
   desc.className = "card-desc";
@@ -975,13 +979,17 @@ function renderItem(item) {
   meta.className = "card-meta";
   meta.appendChild(renderStars(item.stars));
   if (item.url) {
+    meta.appendChild(document.createTextNode(" · "));
+    const mark = document.createElement("span");
+    mark.className = "card-meta-gh-mark";
+    mark.innerHTML = GITHUB_MARK_SVG;
+    meta.appendChild(mark);
     const link = document.createElement("a");
     link.href = item.url;
     link.target = "_blank";
     link.rel = "noopener";
     link.textContent = item.repo || item.url;
     link.onclick = (e) => e.stopPropagation();
-    meta.appendChild(document.createTextNode(" · "));
     meta.appendChild(link);
   } else if (item.repo) {
     meta.appendChild(document.createTextNode(" · " + item.repo));
@@ -1470,8 +1478,8 @@ label textarea { font-family: inherit; resize: vertical; min-height: 4.5rem; }
 .card.status-aprovada  { border-left-color: var(--c-aprovada-fg); }
 .card.status-rejeitada { border-left-color: var(--c-rejeitada-fg); }
 
-.card-head { display: flex; justify-content: space-between; align-items: center; gap: .5rem; margin-bottom: .4rem; }
-.card-name { font-weight: 600; font-size: .92rem; color: var(--strong); word-break: break-word; }
+.card-badges { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; margin-bottom: .4rem; }
+.card-name { display: block; font-weight: 600; font-size: .92rem; color: var(--strong); word-break: break-word; margin-bottom: .3rem; }
 .card-desc {
   font-size: .82rem;
   line-height: 1.4;
@@ -1654,6 +1662,8 @@ button.badge-candidata.btn-primary, button.badge-aprovada.btn-primary, button.ba
 
 .card-meta a { color: var(--accent); text-decoration: none; }
 .card-meta a:hover { text-decoration: underline; }
+.card-meta-gh-mark { display: inline-flex; vertical-align: -2px; margin-right: .25rem; color: var(--muted-2); }
+.card-meta-gh-mark svg { display: block; width: 13px; height: 13px; }
 
 /* ---- Botoes ---- */
 .btn {
