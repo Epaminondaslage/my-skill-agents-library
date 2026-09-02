@@ -67,6 +67,13 @@ const PURPOSES = [
 const SORTS = ["default", "stars", "updated", "name"];
 const EDITABLE = ["name", "repo", "function", "dev_note"];
 
+// dev_note is the *internal* note (as opposed to personal_note, the user's
+// own) — flagged with an envelope-near-a-house pair so it reads as "a note
+// sent home", distinct from every other plain-text field label.
+function fieldLabelText(field) {
+  return field === "dev_note" ? "✉️🏠 " + field : field;
+}
+
 // ---- i18n: pt (default) / en / es, persisted in localStorage --------------
 // Item DATA (name/function/dev_note/personal_note) is never translated —
 // only the UI chrome below is. STRINGS falls back to pt for any missing key.
@@ -769,7 +776,7 @@ function renderAddModal() {
   const inputs = {};
   EDITABLE.forEach((field) => {
     const label = document.createElement("label");
-    label.textContent = field;
+    label.textContent = fieldLabelText(field);
     const input = document.createElement("input");
     input.type = "text";
     input.name = field;
@@ -1041,7 +1048,7 @@ function renderModal(item) {
   const fields = {};
   EDITABLE.forEach((field) => {
     const label = document.createElement("label");
-    label.textContent = field;
+    label.textContent = fieldLabelText(field);
     const input = document.createElement(field === "function" ? "textarea" : "input");
     if (field === "function") input.className = "function-field";
     else input.type = "text";
