@@ -860,7 +860,10 @@ function renderSections(filtered) {
 
     const head = document.createElement("div");
     head.className = "section-head purpose-" + purpose;
-    head.textContent = purposeLabel(purpose);
+    // Count only shows on the section for the actively selected tab — the
+    // tab bar itself already carries every purpose's count, so repeating it
+    // on every section (the "Todos" view) would just be noise.
+    head.textContent = purposeLabel(purpose) + (purpose === filterPurpose ? " (" + group.length + ")" : "");
     section.appendChild(head);
 
     if (group.length === 0) {
